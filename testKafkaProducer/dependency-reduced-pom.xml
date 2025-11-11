@@ -26,7 +26,7 @@
             <configuration>
               <transformers>
                 <transformer>
-                  <mainClass>org.example.FileLogProducer</mainClass>
+                  <mainClass>org.example.AppMain</mainClass>
                 </transformer>
               </transformers>
             </configuration>

@@ -57,7 +57,7 @@
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <!--Point to consumer main class -->
-                                    <mainClass>org.example.FileLogConsumer</mainClass>
+                                    <mainClass>org.example.AppMain</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>
