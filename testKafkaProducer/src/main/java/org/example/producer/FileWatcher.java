@@ -1,4 +1,4 @@
-package org.example;
+package org.example.producer;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -22,7 +22,7 @@ public class FileWatcher implements Runnable {
         try (RandomAccessFile reader = new RandomAccessFile(filePath.toFile(), "r")) {
             long filePointer = reader.length(); // start from end of file
 
-            // loop until interrupted (Ctrl+C triggers interrupt via executor.shutdownNow())
+            // loop until interrupted
             while (!Thread.currentThread().isInterrupted()) {
                 long fileLength = filePath.toFile().length();
 
@@ -35,7 +35,7 @@ public class FileWatcher implements Runnable {
                     reader.seek(filePointer);
                     String line;
                     while ((line = reader.readLine()) != null) {
-                        String msg = line; // note: RandomAccessFile.readLine uses ISO-8859-1
+                        String msg = line; // RandomAccessFile.readLine uses ISO-8859-1
 
                         producer.send(new ProducerRecord<>(topic, msg), (metadata, ex) -> {
                             if (ex != null) {
@@ -53,17 +53,13 @@ public class FileWatcher implements Runnable {
                 try {
                     Thread.sleep(500); // check file every half second
                 } catch (InterruptedException ie) {
-                    // restore flag and exit loop quietly
-                    Thread.currentThread().interrupt();
+                    Thread.currentThread().interrupt(); // restore flag and exit loop
                 }
             }
         } catch (Exception e) {
-            // Log unexpected errors only (normal interrupts won’t land here)
             e.printStackTrace();
         } finally {
-            try {
-                producer.flush(); // ensure in-flight sends complete before thread exits
-            } catch (Exception ignore) { }
+            try { producer.flush(); } catch (Exception ignored) {}
         }
     }
 }

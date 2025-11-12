@@ -1,4 +1,4 @@
-package org.example;
+package org.example.producer;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -8,7 +8,6 @@ import java.util.Properties;
 
 public class KafkaFactory {
 
-    // Same properties as your original code
     public static KafkaProducer<String, String> create(String bootstrapServers) {
         Properties props = new Properties();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);

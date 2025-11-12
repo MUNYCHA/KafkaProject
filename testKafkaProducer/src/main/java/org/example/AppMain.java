@@ -1,7 +1,10 @@
 package org.example;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.kafka.clients.producer.KafkaProducer;
+import org.example.config.ConfigLoader;
+import org.example.config.FileItem;
+import org.example.producer.FileWatcher;
+import org.example.producer.KafkaFactory;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -12,19 +15,19 @@ import java.util.concurrent.Executors;
 public class AppMain {
 
     public static void main(String[] args) throws Exception {
-        // Load config.json from current directory
+        // Load config.json from the current working directory (parent level)
         ConfigLoader config = new ConfigLoader("config.json");
 
         // Create ONE shared Kafka producer
         KafkaProducer<String, String> producer = KafkaFactory.create(config.getBootstrapServers());
 
         // Thread pool — one thread per file
-        ExecutorService executor = Executors.newFixedThreadPool(config.getFilesNode().size());
+        ExecutorService executor = Executors.newFixedThreadPool(config.getFiles().size());
 
         // Start a FileWatcher for each configured file
-        for (JsonNode fileNode : config.getFilesNode()) {
-            String path = fileNode.get("path").asText();
-            String topic = fileNode.get("topic").asText();
+        for (FileItem f : config.getFiles()) {
+            String path = f.getPath();
+            String topic = f.getTopic();
             Path filePath = Paths.get(path);
 
             if (!Files.exists(filePath)) {
@@ -40,6 +43,7 @@ public class AppMain {
         // Graceful shutdown
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.out.println("Shutting down producer...");
+            try { producer.flush(); } catch (Exception ignored) {}
             producer.close();
             executor.shutdownNow();
         }));
