@@ -3,6 +3,7 @@ package org.example.consumer;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.serialization.StringDeserializer;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -19,7 +20,7 @@ public class TopicConsumer implements Runnable {
     public TopicConsumer(String bootstrapServers, String topic, String outputFilePath) {
         this.topic = topic;
 
-        // Kafka consumer configuration (same as your original)
+        // Kafka consumer configuration
         Properties props = new Properties();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
@@ -27,7 +28,6 @@ public class TopicConsumer implements Runnable {
         props.put(ConsumerConfig.GROUP_ID_CONFIG, "file-log-consumer-" + topic);
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
 
-        // Create consumer and subscribe to exactly one topic
         this.consumer = new KafkaConsumer<>(props);
         this.consumer.subscribe(Collections.singletonList(topic));
 
@@ -37,23 +37,41 @@ public class TopicConsumer implements Runnable {
 
     @Override
     public void run() {
-        // Identical write/flush behavior to your original (append + flush each record)
-        try (FileWriter writer = new FileWriter(outputFile.toFile(), true)) {
-            System.out.printf("Listening to %s -> writing to %s%n", topic, outputFile);
+        File file = outputFile.toFile();
 
-            while (true) {
-                ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(500));
+        try {
+            // ✅ Auto-create directories if missing
+            File parentDir = file.getParentFile();
+            if (parentDir != null && !parentDir.exists()) {
+                if (parentDir.mkdirs()) {
+                    System.out.println("Created directories: " + parentDir.getAbsolutePath());
+                }
+            }
 
-                for (ConsumerRecord<String, String> record : records) {
-                    String msg = record.value();
+            // ✅ Auto-create the output file if missing
+            if (!file.exists()) {
+                if (file.createNewFile()) {
+                    System.out.println("Created output file: " + file.getAbsolutePath());
+                }
+            }
 
-                    // Console log
-                    System.out.printf("[%s] (%s) %s%n",
-                            java.time.LocalTime.now(), record.topic(), msg);
+            try (FileWriter writer = new FileWriter(file, true)) {
+                System.out.printf("Listening to %s -> writing to %s%n", topic, outputFile);
 
-                    // Append to file and flush immediately (same semantics)
-                    writer.write(msg + System.lineSeparator());
-                    writer.flush();
+                while (true) {
+                    ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(500));
+
+                    for (ConsumerRecord<String, String> record : records) {
+                        String msg = record.value();
+
+                        // Console log
+                        System.out.printf("[%s] (%s) %s%n",
+                                java.time.LocalTime.now(), record.topic(), msg);
+
+                        // Append to file and flush immediately
+                        writer.write(msg + System.lineSeparator());
+                        writer.flush();
+                    }
                 }
             }
         } catch (IOException e) {

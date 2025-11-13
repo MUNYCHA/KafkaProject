@@ -1,10 +1,10 @@
 {
   "bootstrapServers": "192.168.60.135:9092",
   "files": [
-    { "path": "/home/kafkaproducer/log_file/app1.log", "topic": "app1-topic" },
-    { "path": "/home/kafkaproducer/log_file/app2.log", "topic": "app2-topic" },
-    { "path": "/home/kafkaproducer/log_file/app3.log", "topic": "app3-topic" },
-    { "path": "/home/kafkaproducer/log_file/app4.log", "topic": "app4-topic" },
-    { "path": "/home/kafkaproducer/log_file/system.log", "topic": "system-topic" }
+    { "path": "D:/log_file/app1.log", "topic": "app1-topic" },
+    { "path": "D:/log_file/app2.log", "topic": "app2-topic" },
+    { "path": "D:/log_file/app3.log", "topic": "app3-topic" },
+    { "path": "D:/log_file/app4.log", "topic": "app4-topic" },
+    { "path": "D:/log_file/system.log", "topic": "system-topic" }
   ]
 }
