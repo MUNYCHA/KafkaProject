@@ -21,19 +21,21 @@ Each file is linked to a Kafka topic (for example, `app1.log` → `app1-topic`).
 
 ```json
 {
-  "bootstrapServers": "192.168.60.135:9092",
-  "files": [
-    { "path": "/home/kafkaproducer/log_file/app1.log", "topic": "app1-topic" },
-    { "path": "/home/kafkaproducer/log_file/app2.log", "topic": "app2-topic" },
-    { "path": "/home/kafkaproducer/log_file/system.log", "topic": "system-topic" }
-  ]
+   "bootstrapServers": "192.168.60.135:9092",
+   "files": [
+      { "path": "D:/log_file/app1.log", "topic": "app1-topic" },
+      { "path": "D:/log_file/app2.log", "topic": "app2-topic" },
+      { "path": "D:/log_file/app3.log", "topic": "app3-topic" },
+      { "path": "D:/log_file/app4.log", "topic": "app4-topic" },
+      { "path": "D:/log_file/system.log", "topic": "system-topic" }
+   ]
 }
 ```
 
 ✅ **To add more files to watch:**  
 Add another entry in the `"files"` list like this:
 ```json
-{ "path": "/home/kafkaproducer/log_file/newapp.log", "topic": "newapp-topic" }
+{ "path": "D:/log_file/newapp.log", "topic": "newapp-topic" }
 ```
 Restart the producer — it will automatically begin watching the new file and sending logs to the new topic.
 
@@ -47,27 +49,6 @@ Restart the producer — it will automatically begin watching the new file and s
 
 ---
 
-## ▶️ How to Run
-
-1. **Build the JAR file:**
-   ```bash
-   mvn clean package
-   ```
-
-2. **Run the program:**
-   ```bash
-   java -jar target/testKafkaProducer-1.0.jar
-   ```
-
-You’ll see console logs like:
-```
-[21:02:45] Watching file: /home/kafkaproducer/log_file/app1.log -> Topic: app1-topic
-[21:02:50] Topic: app1-topic Sent message: INFO Application started
-```
-
-Press **Ctrl + C** to stop gracefully.
-
----
 
 ## 🧠 Project Structure
 

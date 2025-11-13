@@ -21,11 +21,14 @@ Each topic has its own output file.
 
 ```json
 {
-  "bootstrapServers": "192.168.60.135:9092",
-  "topics": [
-    { "topic": "app1-topic", "output": "/home/kafkaconsumer/logs/app1.log" },
-    { "topic": "app2-topic", "output": "/home/kafkaconsumer/logs/app2.log" }
-  ]
+   "bootstrapServers": "192.168.60.135:9092",
+   "topics": [
+      { "topic": "app1-topic", "output": "D:/log_file/received_app1.log" },
+      { "topic": "app2-topic", "output": "D:/log_file/received_app2.log" },
+      { "topic": "app3-topic", "output": "D:/log_file/received_app3.log" },
+      { "topic": "app4-topic", "output": "D:/log_file/received_app4.log" },
+      { "topic": "system-topic", "output": "D:/log_file/received_system.log" }
+   ]
 }
 ```
 
@@ -33,7 +36,7 @@ Each topic has its own output file.
 Add another object inside the `"topics"` list:
 
 ```json
-{ "topic": "new-topic", "output": "/home/kafkaconsumer/logs/new.log" }
+{ "topic": "new-topic", "output": "D:/log_file/new.log" }
 ```
 
 Then restart the program — it will automatically start listening to that new topic.
@@ -48,27 +51,6 @@ Then restart the program — it will automatically start listening to that new t
 
 ---
 
-## ▶️ How to Run
-
-1. **Build the JAR file:**
-   ```bash
-   mvn clean package
-   ```
-
-2. **Run the program:**
-   ```bash
-   java -jar target/testKafkaConsumer-1.0.jar
-   ```
-
-You’ll see logs like:
-```
-Listening to app1-topic -> writing to /home/kafkaconsumer/logs/app1.log
-[20:45:33] (app1-topic) INFO Application started
-```
-
-Press **Ctrl + C** to stop safely.
-
----
 
 ## 📂 Project Structure
 
