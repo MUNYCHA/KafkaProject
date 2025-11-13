@@ -54,7 +54,10 @@ public class FileWatcher implements Runnable {
                         reader.seek(filePointer);
                         String line;
                         while ((line = reader.readLine()) != null) {
-                            String msg = line.replace("\r", ""); // clean Windows CRLF
+                            String msg = line.trim(); // remove spaces, tabs, CR/LF
+
+                            // ✅ skip blank or whitespace-only lines
+                            if (msg.isEmpty()) continue;
 
                             producer.send(new ProducerRecord<>(topic, msg), (metadata, ex) -> {
                                 if (ex != null) {
@@ -66,6 +69,7 @@ public class FileWatcher implements Runnable {
                                 }
                             });
                         }
+
                         filePointer = reader.getFilePointer();
                     }
 
