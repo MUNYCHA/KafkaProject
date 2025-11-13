@@ -35,7 +35,13 @@ public class FileWatcher implements Runnable {
                     reader.seek(filePointer);
                     String line;
                     while ((line = reader.readLine()) != null) {
-                        String msg = line; // RandomAccessFile.readLine uses ISO-8859-1
+                        String msg = line
+                                .replace("\uFEFF", "")  // remove BOM
+                                .replace("\r", "")       // remove Windows CR
+                                .trim();                 // remove leading/trailing spaces
+
+                        if (msg.isBlank()) continue;     // skip empty or whitespace-only lines
+
 
                         producer.send(new ProducerRecord<>(topic, msg), (metadata, ex) -> {
                             if (ex != null) {
