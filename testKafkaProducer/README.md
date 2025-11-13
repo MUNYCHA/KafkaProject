@@ -98,6 +98,7 @@ src/
 | `FileWatcher` | Monitors file changes and sends new lines to Kafka |
 | `ConfigLoader` | Reads settings from `config.json` |
 | `FileItem` | Represents one file → topic mapping |
+| `ConfigData` | Represents the full structure of `config.json` (bootstrapServers + list of FileItem objects) |
 | `KafkaFactory` | Creates and configures the Kafka producer |
 
 ---

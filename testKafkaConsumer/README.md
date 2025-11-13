@@ -96,8 +96,10 @@ src/
 |-------|----------|
 | `AppMain` | Starts the consumer threads for each topic |
 | `TopicConsumer` | Consumes messages and writes them to files |
-| `ConfigLoader` | Reads settings from `config.json` |
+| `ConfigLoader` | Reads and parses settings from `config.json` |
+| `ConfigData` | Represents the full JSON structure (bootstrap servers and list of TopicConfig objects) |
 | `TopicConfig` | Holds topic name and output file path info |
+
 
 ---
 
