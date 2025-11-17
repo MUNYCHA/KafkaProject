@@ -30,10 +30,12 @@ public class AppMain {
             String topic = f.getTopic();
             Path filePath = Paths.get(path);
 
+            // Just a warning, do not skip
             if (!Files.exists(filePath)) {
-                System.err.printf("[%s] File not found: %s%n", java.time.LocalTime.now(), path);
-                continue;
+                System.out.printf("[%s] File missing, will create automatically: %s%n",
+                        java.time.LocalTime.now(), path);
             }
+
 
             executor.submit(new FileWatcher(filePath, topic, producer));
             System.out.printf("[%s] Watching file: %s -> Topic: %s%n",

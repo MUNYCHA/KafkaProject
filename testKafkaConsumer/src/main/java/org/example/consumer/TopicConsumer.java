@@ -37,6 +37,18 @@ public class TopicConsumer implements Runnable {
 
     @Override
     public void run() {
+
+        // Auto-create file and parent directories
+        try {
+            if (!outputFile.toFile().exists()) {
+                outputFile.toFile().getParentFile().mkdirs(); // create parent folders
+                outputFile.toFile().createNewFile();          // create file
+                System.out.println("Created missing consumer output file: " + outputFile);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         // Identical write/flush behavior to your original (append + flush each record)
         try (FileWriter writer = new FileWriter(outputFile.toFile(), true)) {
             System.out.printf("Listening to %s -> writing to %s%n", topic, outputFile);
