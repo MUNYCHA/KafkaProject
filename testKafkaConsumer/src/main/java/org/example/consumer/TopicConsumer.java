@@ -67,6 +67,7 @@ public class TopicConsumer implements Runnable {
                                     lower.contains("fail") ||
                                     lower.contains("failure") ||
                                     lower.contains("server error") ||
+                                    lower.contains("500") ||
                                     lower.contains("404");
 
                     if (alert) {
