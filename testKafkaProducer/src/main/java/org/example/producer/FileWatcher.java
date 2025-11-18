@@ -3,6 +3,8 @@ package org.example.producer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.file.Path;
 
@@ -19,56 +21,69 @@ public class FileWatcher implements Runnable {
 
     @Override
     public void run() {
+
+        // ---- Auto-create file + parent folders (same style as consumer) ----
         try {
-            // Auto-create file if not exist
-            if (!filePath.toFile().exists()) {
-                filePath.toFile().getParentFile().mkdirs();  // create directories if needed
-                filePath.toFile().createNewFile();           // create the file
-                System.out.println("Created missing log file: " + filePath);
+            File f = filePath.toFile();
+            File parent = f.getParentFile();
+
+            if (parent != null && !parent.exists()) {
+                parent.mkdirs();
             }
 
-            try (RandomAccessFile reader = new RandomAccessFile(filePath.toFile(), "r")) {
-                long filePointer = reader.length(); // start from end of file
+            if (!f.exists()) {
+                f.createNewFile();
+                System.out.println("Created missing producer log file: " + filePath);
+            }
 
-                while (!Thread.currentThread().isInterrupted()) {
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
 
-                    long fileLength = filePath.toFile().length();
+        // ---- Begin file watching ----
+        try (RandomAccessFile reader = new RandomAccessFile(filePath.toFile(), "r")) {
+            long filePointer = reader.length(); // start from end of file
+            System.out.printf("[%s] Watching file: %s -> Topic: %s%n", java.time.LocalTime.now(), filePath, topic);
+            while (!Thread.currentThread().isInterrupted()) {
 
-                    if (fileLength < filePointer) {
-                        filePointer = fileLength;
-                        reader.seek(filePointer);
+                long fileLength = filePath.toFile().length();
 
-                    } else if (fileLength > filePointer) {
-                        reader.seek(filePointer);
-                        String line;
+                if (fileLength < filePointer) {
+                    filePointer = fileLength;
+                    reader.seek(filePointer);
 
-                        while ((line = reader.readLine()) != null) {
+                } else if (fileLength > filePointer) {
+                    reader.seek(filePointer);
+                    String line;
 
-                            String msg = line
-                                    .replace("\uFEFF", "")
-                                    .replace("\r", "")
-                                    .trim();
+                    while ((line = reader.readLine()) != null) {
 
-                            if (msg.isBlank()) continue;
+                        String msg = line
+                                .replace("\uFEFF", "")
+                                .replace("\r", "")
+                                .trim();
 
-                            producer.send(new ProducerRecord<>(topic, msg), (metadata, ex) -> {
-                                if (ex != null) {
-                                    System.err.printf("[%s] Topic: %-15s Error: %s%n",
-                                            java.time.LocalTime.now(), topic, ex.getMessage());
-                                } else {
-                                    System.out.printf("[%s] Topic: %-15s Sent message: %s%n",
-                                            java.time.LocalTime.now(), topic, msg);
-                                }
-                            });
-                        }
-                        filePointer = reader.getFilePointer();
+                        if (msg.isBlank()) continue;
+
+                        producer.send(new ProducerRecord<>(topic, msg), (metadata, ex) -> {
+                            if (ex != null) {
+                                System.err.printf("[%s] Topic: %-15s Error: %s%n",
+                                        java.time.LocalTime.now(), topic, ex.getMessage());
+                            } else {
+                                System.out.printf("[%s] Topic: %-15s Sent message: %s%n",
+                                        java.time.LocalTime.now(), topic, msg);
+                            }
+                        });
                     }
 
-                    try {
-                        Thread.sleep(500);
-                    } catch (InterruptedException ie) {
-                        Thread.currentThread().interrupt();
-                    }
+                    filePointer = reader.getFilePointer();
+                }
+
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException ie) {
+                    return; // clean shutdown
                 }
             }
 
@@ -78,4 +93,5 @@ public class FileWatcher implements Runnable {
             try { producer.flush(); } catch (Exception ignored) {}
         }
     }
+
 }

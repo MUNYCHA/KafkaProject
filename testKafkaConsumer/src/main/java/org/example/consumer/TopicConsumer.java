@@ -4,6 +4,7 @@ import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.example.telegram.TelegramNotifier;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -42,6 +43,26 @@ public class TopicConsumer implements Runnable {
 
     @Override
     public void run() {
+        // ---- Auto-create file + parent folders ----
+        try {
+            File f = outputFile.toFile();
+            File parent = f.getParentFile();
+
+            if (parent != null && !parent.exists()) {
+                parent.mkdirs();
+            }
+
+            if (!f.exists()) {
+                f.createNewFile();
+                System.out.println("Created missing consumer output file: " + outputFile);
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+        // ---- Start consuming ----
         try (FileWriter writer = new FileWriter(outputFile.toFile(), true)) {
 
             System.out.printf("Listening to %s -> writing to %s%n", topic, outputFile);
@@ -50,6 +71,7 @@ public class TopicConsumer implements Runnable {
                 ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(500));
 
                 for (ConsumerRecord<String, String> record : records) {
+
                     String msg = record.value();
                     String lower = msg.toLowerCase();
 
@@ -61,7 +83,7 @@ public class TopicConsumer implements Runnable {
                     writer.write(msg + System.lineSeparator());
                     writer.flush();
 
-                    // 3. Check for alert AFTER printing + saving
+                    // 3. Alert keyword detection
                     boolean alert =
                             lower.contains("error") ||
                                     lower.contains("fail") ||
@@ -70,14 +92,23 @@ public class TopicConsumer implements Runnable {
                                     lower.contains("500") ||
                                     lower.contains("404");
 
+
+                    // 4. If alert -> send formatted telegram message
                     if (alert) {
-                        // Send alert in background thread so it never blocks the consumer
-                        new Thread(() ->
-                                notifier.sendMessage("❗ ALERT from " + topic + ":\n" + msg)
-                        ).start();
+
+                        String timestamp = java.time.LocalDateTime.now()
+                                .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+
+                        String alertMessage =
+                                "❗ ALERT\n" +
+                                        "📅 " + timestamp + "\n" +
+                                        "📌 Topic: " + topic + "\n" +
+                                        "📝 Message:\n" +
+                                        msg;
+
+                        new Thread(() -> notifier.sendMessage(alertMessage)).start();
                     }
                 }
-
             }
 
         } catch (IOException e) {
@@ -86,4 +117,5 @@ public class TopicConsumer implements Runnable {
             consumer.close();
         }
     }
+
 }

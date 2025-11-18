@@ -29,17 +29,7 @@ public class AppMain {
             String path = f.getPath();
             String topic = f.getTopic();
             Path filePath = Paths.get(path);
-
-            // Just a warning, do not skip
-            if (!Files.exists(filePath)) {
-                System.out.printf("[%s] File missing, will create automatically: %s%n",
-                        java.time.LocalTime.now(), path);
-            }
-
-
             executor.submit(new FileWatcher(filePath, topic, producer));
-            System.out.printf("[%s] Watching file: %s -> Topic: %s%n",
-                    java.time.LocalTime.now(), path, topic);
         }
 
         // Graceful shutdown
