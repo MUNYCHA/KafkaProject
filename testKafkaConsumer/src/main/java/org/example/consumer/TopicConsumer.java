@@ -53,6 +53,15 @@ public class TopicConsumer implements Runnable {
                     String msg = record.value();
                     String lower = msg.toLowerCase();
 
+                    // 1. Print immediately
+                    System.out.printf("[%s] (%s) %s%n",
+                            java.time.LocalTime.now(), record.topic(), msg);
+
+                    // 2. Save to file
+                    writer.write(msg + System.lineSeparator());
+                    writer.flush();
+
+                    // 3. Check for alert AFTER printing + saving
                     boolean alert =
                             lower.contains("error") ||
                                     lower.contains("fail") ||
@@ -61,17 +70,13 @@ public class TopicConsumer implements Runnable {
                                     lower.contains("404");
 
                     if (alert) {
-                        notifier.sendMessage("❗ ALERT from " + topic + ":\n" + msg);
+                        // Send alert in background thread so it never blocks the consumer
+                        new Thread(() ->
+                                notifier.sendMessage("❗ ALERT from " + topic + ":\n" + msg)
+                        ).start();
                     }
-
-                    // Print
-                    System.out.printf("[%s] (%s) %s%n",
-                            java.time.LocalTime.now(), record.topic(), msg);
-
-                    // Save to file
-                    writer.write(msg + System.lineSeparator());
-                    writer.flush();
                 }
+
             }
 
         } catch (IOException e) {
