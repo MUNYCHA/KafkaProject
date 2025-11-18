@@ -1,0 +1,12 @@
+{
+  "bootstrapServers": "KAFKA_BOOTSTRAP_SERVER",
+
+  "telegramBotToken": "PUT_YOUR_TELEGRAM_BOT_TOKEN_HERE",
+  "telegramChatId": "PUT_YOUR_TELEGRAM_CHAT_ID_HERE",
+
+  "topics": [
+    { "topic": "topic-name-1", "output": "/path/to/output1.log" },
+    { "topic": "topic-name-2", "output": "/path/to/output2.log" },
+    { "topic": "topic-name-3", "output": "/path/to/output3.log" }
+  ]
+}
