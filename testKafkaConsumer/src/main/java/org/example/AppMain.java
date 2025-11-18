@@ -16,13 +16,18 @@ public class AppMain {
         // Create a thread pool — one thread per topic
         ExecutorService executor = Executors.newFixedThreadPool(config.getTopics().size());
 
+
+
         // Start one TopicConsumer per topic
         for (TopicConfig t : config.getTopics()) {  // 🔹 Notice: no more ConfigLoader.TopicConfig
             executor.submit(new TopicConsumer(
-                    config.getBootstrapServers(),
-                    t.getTopic(),
-                    t.getOutput()
-            ));
+                            config.getBootstrapServers(),
+                            t.getTopic(),
+                            t.getOutput(),
+                            config.getTelegramBotToken(),
+                            config.getTelegramChatId()
+                    )
+            );
         }
 
         // Shutdown hook (Ctrl + C)
