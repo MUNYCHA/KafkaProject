@@ -5,8 +5,11 @@
   "telegramChatId": "PUT_YOUR_TELEGRAM_CHAT_ID_HERE",
 
   "topics": [
-    { "topic": "topic-name-1", "output": "/path/to/output1.log" },
-    { "topic": "topic-name-2", "output": "/path/to/output2.log" },
-    { "topic": "topic-name-3", "output": "/path/to/output3.log" }
+    { "topic": "app1-topic", "output": "/home/kafkaproducer/test_log_file/received_app1.log" },
+    { "topic": "app2-topic", "output": "/home/kafkaproducer/test_log_file/received_app2.log" },
+    { "topic": "app3-topic", "output": "/home/kafkaproducer/test_log_file/received_app3.log" },
+    { "topic": "app4-topic", "output": "/home/kafkaproducer/test_log_file/received_app4.log" },
+    { "topic": "system-topic", "output": "/home/kafkaproducer/test_log_file/received_system.log" },
+    { "topic": "server-topic", "output": "/home/kafkaproducer/test_log_file/received_server.log" }
   ]
 }
