@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
 
 public class TopicConsumer implements Runnable {
@@ -19,11 +20,14 @@ public class TopicConsumer implements Runnable {
     private final KafkaConsumer<String, String> consumer;
     private final Path outputFile;
     private final TelegramNotifier notifier;
+    private final List<String> alertKeywords;
 
     public TopicConsumer(String bootstrapServers, String topic, String outputFilePath,
-                         String botToken, String chatId) {
+                         String botToken, String chatId,
+                         List<String> alertKeywords) {
 
         this.topic = topic;
+        this.alertKeywords = alertKeywords;
 
         Properties props = new Properties();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
@@ -36,14 +40,12 @@ public class TopicConsumer implements Runnable {
         this.consumer.subscribe(Collections.singletonList(topic));
 
         this.outputFile = Paths.get(outputFilePath);
-
-        // Create the Telegram notifier
         this.notifier = new TelegramNotifier(botToken, chatId);
     }
 
     @Override
     public void run() {
-        // ---- Auto-create file + parent folders ----
+
         try {
             File f = outputFile.toFile();
             File parent = f.getParentFile();
@@ -61,8 +63,6 @@ public class TopicConsumer implements Runnable {
             e.printStackTrace();
         }
 
-
-        // ---- Start consuming ----
         try (FileWriter writer = new FileWriter(outputFile.toFile(), true)) {
 
             System.out.printf("Listening to %s -> writing to %s%n", topic, outputFile);
@@ -75,25 +75,15 @@ public class TopicConsumer implements Runnable {
                     String msg = record.value();
                     String lower = msg.toLowerCase();
 
-                    // 1. Print immediately
                     System.out.printf("[%s] (%s) %s%n",
                             java.time.LocalTime.now(), record.topic(), msg);
 
-                    // 2. Save to file
                     writer.write(msg + System.lineSeparator());
                     writer.flush();
 
-                    // 3. Alert keyword detection
-                    boolean alert =
-                            lower.contains("error") ||
-                                    lower.contains("fail") ||
-                                    lower.contains("failure") ||
-                                    lower.contains("server error") ||
-                                    lower.contains("500") ||
-                                    lower.contains("404");
+                    boolean alert = alertKeywords.stream()
+                            .anyMatch(lower::contains);
 
-
-                    // 4. If alert -> send formatted telegram message
                     if (alert) {
 
                         String timestamp = java.time.LocalDateTime.now()
@@ -101,9 +91,9 @@ public class TopicConsumer implements Runnable {
 
                         String alertMessage =
                                 "❗ ALERT\n" +
-                                        "📅 " + timestamp + "\n" +
-                                        "📌 Topic: " + topic + "\n" +
-                                        "📝 Message:\n" +
+                                        " Timestamp: " + timestamp + "\n" +
+                                        " Topic: " + topic + "\n" +
+                                        " Message:\n" +
                                         msg;
 
                         new Thread(() -> notifier.sendMessage(alertMessage)).start();
@@ -117,5 +107,4 @@ public class TopicConsumer implements Runnable {
             consumer.close();
         }
     }
-
 }

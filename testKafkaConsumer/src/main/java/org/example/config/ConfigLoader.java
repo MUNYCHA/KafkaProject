@@ -11,9 +11,10 @@ public class ConfigLoader {
     private final String telegramBotToken;
     private final String telegramChatId;
     private final List<TopicConfig> topics;
+    private final List<String> alertKeywords;
 
     public ConfigLoader(String filePath) throws Exception {
-        // Load file from resources (classpath)
+
         InputStream inputStream = getClass().getClassLoader().getResourceAsStream(filePath);
         if (inputStream == null) {
             throw new FileNotFoundException("Config file not found in resources: " + filePath);
@@ -26,6 +27,7 @@ public class ConfigLoader {
         this.telegramBotToken = data.getTelegramBotToken();
         this.telegramChatId = data.getTelegramChatId();
         this.topics = data.getTopics();
+        this.alertKeywords = data.getAlertKeywords();
     }
 
     public String getBootstrapServers() {
@@ -42,5 +44,9 @@ public class ConfigLoader {
 
     public List<TopicConfig> getTopics() {
         return topics;
+    }
+
+    public List<String> getAlertKeywords() {
+        return alertKeywords;
     }
 }

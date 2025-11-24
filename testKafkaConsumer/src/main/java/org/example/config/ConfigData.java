@@ -8,10 +8,10 @@ public class ConfigData {
     private String telegramBotToken;
     private String telegramChatId;
     private List<TopicConfig> topics;
+    private List<String> alertKeywords;
 
     public ConfigData() {}
 
-    // Getters
     public String getBootstrapServers() {
         return bootstrapServers;
     }
@@ -26,5 +26,9 @@ public class ConfigData {
 
     public List<TopicConfig> getTopics() {
         return topics;
+    }
+
+    public List<String> getAlertKeywords() {
+        return alertKeywords;
     }
 }

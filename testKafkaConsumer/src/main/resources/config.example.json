@@ -11,5 +11,23 @@
     { "topic": "app4-topic", "output": "/home/kafkaproducer/test_log_file/received_app4.log" },
     { "topic": "system-topic", "output": "/home/kafkaproducer/test_log_file/received_system.log" },
     { "topic": "server-topic", "output": "/home/kafkaproducer/test_log_file/received_server.log" }
+  ],
+
+  "alertKeywords": [
+    "error",
+    "fail",
+    "failure",
+    "fatal",
+    "exception",
+    "timeout",
+    "server error",
+    "critical",
+    "warn",
+    "warning",
+    "panic",
+    "crash",
+    "500",
+    "404",
+    "503"
   ]
 }
