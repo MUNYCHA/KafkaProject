@@ -206,6 +206,20 @@ src/
          └── config.json
 ```
 
+## 🧩 Class Overview
+
+| Class              | Purpose                                                                                                                         |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| `AppMain`          | Loads config, starts all TopicConsumers, creates the shared DB connection, and manages consumer threads                         |
+| `TopicConsumer`    | Consumes messages from one Kafka topic, writes logs, detects alert keywords, sends Telegram alerts, and saves alerts into MySQL |
+| `ConfigLoader`     | Reads and parses `config.json` into Java objects using Jackson                                                                  |
+| `ConfigData`       | Represents the full JSON structure: Kafka config, Telegram config, topics list, alert keywords, and database settings           |
+| `TopicConfig`      | Represents a single topic→output mapping defined in `config.json`                                                               |
+| `DatabaseConfig`   | Represents MySQL settings: URL, user, password, and table name                                                                  |
+| `AlertDatabase`    | Handles MySQL connection and inserts alert records into the alert_logs table                                                    |
+| `TelegramNotifier` | Sends formatted alert messages to Telegram with built-in rate limiting                                                          |
+
+
 ---
 
 ## 💡 Tips
