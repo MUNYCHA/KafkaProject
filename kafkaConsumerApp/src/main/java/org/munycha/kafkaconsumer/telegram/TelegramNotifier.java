@@ -1,4 +1,4 @@
-package org.example.telegram;
+package org.munycha.kafkaconsumer.telegram;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.InputStream;

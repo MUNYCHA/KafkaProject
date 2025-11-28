@@ -1,4 +1,4 @@
-package org.example.config;
+package org.munycha.kafkaconsumer.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.FileNotFoundException;
@@ -10,8 +10,11 @@ public class ConfigLoader {
     private final String bootstrapServers;
     private final String telegramBotToken;
     private final String telegramChatId;
+
     private final List<TopicConfig> topics;
     private final List<String> alertKeywords;
+
+    private final DatabaseConfig database;  // <-- NEW FIELD
 
     public ConfigLoader(String filePath) throws Exception {
 
@@ -28,6 +31,7 @@ public class ConfigLoader {
         this.telegramChatId = data.getTelegramChatId();
         this.topics = data.getTopics();
         this.alertKeywords = data.getAlertKeywords();
+        this.database = data.getDatabase();   // <-- LOAD DB CONFIG
     }
 
     public String getBootstrapServers() {
@@ -48,5 +52,9 @@ public class ConfigLoader {
 
     public List<String> getAlertKeywords() {
         return alertKeywords;
+    }
+
+    public DatabaseConfig getDatabase() {   // <-- NEW GETTER
+        return database;
     }
 }

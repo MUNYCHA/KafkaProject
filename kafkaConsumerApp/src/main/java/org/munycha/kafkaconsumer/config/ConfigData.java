@@ -1,4 +1,4 @@
-package org.example.config;
+package org.munycha.kafkaconsumer.config;
 
 import java.util.List;
 
@@ -7,8 +7,11 @@ public class ConfigData {
     private String bootstrapServers;
     private String telegramBotToken;
     private String telegramChatId;
+
     private List<TopicConfig> topics;
     private List<String> alertKeywords;
+
+    private DatabaseConfig database;   // <-- NEW FIELD
 
     public ConfigData() {}
 
@@ -30,5 +33,9 @@ public class ConfigData {
 
     public List<String> getAlertKeywords() {
         return alertKeywords;
+    }
+
+    public DatabaseConfig getDatabase() {   // <-- NEW GETTER
+        return database;
     }
 }

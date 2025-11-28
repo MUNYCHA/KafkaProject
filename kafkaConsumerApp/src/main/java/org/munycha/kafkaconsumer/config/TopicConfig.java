@@ -1,4 +1,4 @@
-package org.example.config;
+package org.munycha.kafkaconsumer.config;
 
 
 public class TopicConfig {

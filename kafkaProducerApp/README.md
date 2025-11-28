@@ -75,7 +75,7 @@ Press **Ctrl + C** to stop gracefully.
 src/
  └── main/
      ├── java/
-     │   └── org/example/
+     │   └── org/munycha/kafkaproducer
      │       ├── AppMain.java                 # Entry point
      │       ├── config/
      │       │   ├── ConfigLoader.java        # Loads JSON config

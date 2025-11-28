@@ -169,7 +169,7 @@ Listening to app1-topic -> writing to /path/to/output.log
 src/
  └── main/
      ├── java/
-     │   └── org/example/
+     │   └── com/munycha/kafkaconsumer/
      │       ├── AppMain.java
      │       ├── consumer/
      │       │   └── TopicConsumer.java
@@ -177,11 +177,14 @@ src/
      │       │   ├── ConfigLoader.java
      │       │   ├── ConfigData.java
      │       │   └── TopicConfig.java
-     │       └── telegram/
-     │           └── TelegramNotifier.java
+     │       ├── telegram/
+     │       │   └── TelegramNotifier.java
+     │       └── db/
+     │           └── AlertDatabase.java
      └── resources/
          ├── config.example.json
-         └── config.json   (ignored by Git)
+         └── config.json
+
 ```
 
 ---

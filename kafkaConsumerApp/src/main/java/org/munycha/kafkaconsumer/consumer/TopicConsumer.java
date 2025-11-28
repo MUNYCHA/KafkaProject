@@ -1,8 +1,9 @@
-package org.example.consumer;
+package org.munycha.kafkaconsumer.consumer;
 
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import org.example.telegram.TelegramNotifier;
+import org.munycha.kafkaconsumer.telegram.TelegramNotifier;
+import org.munycha.kafkaconsumer.db.AlertDatabase;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -21,13 +22,19 @@ public class TopicConsumer implements Runnable {
     private final Path outputFile;
     private final TelegramNotifier notifier;
     private final List<String> alertKeywords;
+    private final AlertDatabase db;   // <-- NEW
 
-    public TopicConsumer(String bootstrapServers, String topic, String outputFilePath,
-                         String botToken, String chatId,
-                         List<String> alertKeywords) {
+    public TopicConsumer(String bootstrapServers,
+                         String topic,
+                         String outputFilePath,
+                         String botToken,
+                         String chatId,
+                         List<String> alertKeywords,
+                         AlertDatabase db) {   // <-- NEW ARGUMENT
 
         this.topic = topic;
         this.alertKeywords = alertKeywords;
+        this.db = db;   // <-- STORE DB INSTANCE
 
         Properties props = new Properties();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
@@ -96,7 +103,11 @@ public class TopicConsumer implements Runnable {
                                         " Message:\n" +
                                         msg;
 
+                        // Telegram
                         new Thread(() -> notifier.sendMessage(alertMessage)).start();
+
+                        // Database insert
+                        db.saveAlert(topic, timestamp, msg);
                     }
                 }
             }
