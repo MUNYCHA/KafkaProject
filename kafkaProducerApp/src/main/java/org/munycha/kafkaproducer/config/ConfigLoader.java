@@ -1,4 +1,4 @@
-package org.example.config;
+package org.munycha.kafkaproducer.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.FileNotFoundException;

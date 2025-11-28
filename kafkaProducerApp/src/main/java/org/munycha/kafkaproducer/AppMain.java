@@ -1,12 +1,11 @@
-package org.example;
+package org.munycha.kafkaproducer;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
-import org.example.config.ConfigLoader;
-import org.example.config.FileItem;
-import org.example.producer.FileWatcher;
-import org.example.producer.KafkaFactory;
+import org.munycha.kafkaproducer.config.ConfigLoader;
+import org.munycha.kafkaproducer.config.FileItem;
+import org.munycha.kafkaproducer.producer.FileWatcher;
+import org.munycha.kafkaproducer.producer.KafkaFactory;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.ExecutorService;

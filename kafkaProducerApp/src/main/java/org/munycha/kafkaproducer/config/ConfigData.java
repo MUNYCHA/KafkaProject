@@ -1,4 +1,4 @@
-package org.example.config;
+package org.munycha.kafkaproducer.config;
 
 import java.util.List;
 
