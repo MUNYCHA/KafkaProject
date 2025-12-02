@@ -130,8 +130,7 @@ public class TopicConsumer implements Runnable {
                 "ALERT\n" +
                         " Timestamp: " + displayTimestamp + "\n" +
                         " Topic: " + topic + "\n" +
-                        " Message:\n" +
-                        msg;
+                        " Message: " + msg;
 
         // Telegram async send
         new Thread(() -> notifier.sendMessage(alertMessage)).start();
