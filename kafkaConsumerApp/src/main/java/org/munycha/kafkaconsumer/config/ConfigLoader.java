@@ -14,7 +14,7 @@ public class ConfigLoader {
     private final List<TopicConfig> topics;
     private final List<String> alertKeywords;
 
-    private final DatabaseConfig database;  // <-- NEW FIELD
+    private final DatabaseConfig database;
 
     public ConfigLoader(String filePath) throws Exception {
 
@@ -31,7 +31,7 @@ public class ConfigLoader {
         this.telegramChatId = data.getTelegramChatId();
         this.topics = data.getTopics();
         this.alertKeywords = data.getAlertKeywords();
-        this.database = data.getDatabase();   // <-- LOAD DB CONFIG
+        this.database = data.getDatabase();
     }
 
     public String getBootstrapServers() {

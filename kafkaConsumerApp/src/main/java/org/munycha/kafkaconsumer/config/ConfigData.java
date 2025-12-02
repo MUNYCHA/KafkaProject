@@ -11,7 +11,7 @@ public class ConfigData {
     private List<TopicConfig> topics;
     private List<String> alertKeywords;
 
-    private DatabaseConfig database;   // <-- NEW FIELD
+    private DatabaseConfig database;
 
     public ConfigData() {}
 

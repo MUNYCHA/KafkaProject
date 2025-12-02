@@ -24,7 +24,7 @@ public class AlertDatabase {
     }
 
     // ------------------------------------------------------------
-    // 1. Load JDBC driver (only once)
+    // 1. Load JDBC driver
     // ------------------------------------------------------------
     private void loadDriver() {
         try {
@@ -35,7 +35,7 @@ public class AlertDatabase {
     }
 
     // ------------------------------------------------------------
-    // 2. Get connection (separated, easier to extend)
+    // 2. Get connection
     // ------------------------------------------------------------
     private Connection getConnection() throws Exception {
         return DriverManager.getConnection(url, user, password);

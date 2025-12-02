@@ -27,7 +27,7 @@ public class AppMain {
                     config.getTelegramBotToken(),
                     config.getTelegramChatId(),
                     config.getAlertKeywords(),
-                    db   // <-- PASS DB INSTANCE HERE
+                    db
             ));
         }
 

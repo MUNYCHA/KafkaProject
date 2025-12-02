@@ -127,7 +127,7 @@ public class TopicConsumer implements Runnable {
                 java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 
         String alertMessage =
-                "❗ ALERT\n" +
+                "ALERT\n" +
                         " Timestamp: " + displayTimestamp + "\n" +
                         " Topic: " + topic + "\n" +
                         " Message:\n" +
