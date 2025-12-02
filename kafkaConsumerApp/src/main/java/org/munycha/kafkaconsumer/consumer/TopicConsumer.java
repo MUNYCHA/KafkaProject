@@ -104,7 +104,7 @@ public class TopicConsumer implements Runnable {
         System.out.printf("[%s] (%s) %s%n",
                 java.time.LocalTime.now(), record.topic(), msg);
 
-        // Only write if file exists (no auto-create)
+        
         if (Files.exists(outputFile)) {
             writer.write(msg + System.lineSeparator());
             writer.flush();
