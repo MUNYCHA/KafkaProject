@@ -6,6 +6,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class FileWatcher implements Runnable {
@@ -22,24 +23,12 @@ public class FileWatcher implements Runnable {
     @Override
     public void run() {
 
-        // ---- Auto-create file + parent folders (same style as consumer) ----
-        try {
-            File f = filePath.toFile();
-            File parent = f.getParentFile();
-
-            if (parent != null && !parent.exists()) {
-                parent.mkdirs();
-            }
-
-            if (!f.exists()) {
-                f.createNewFile();
-                System.out.println("Created missing producer log file: " + filePath);
-            }
-
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (!Files.exists(filePath)) {
+            System.err.println("Producer output file does NOT exist: " + filePath);
+            System.err.println("Please create it manually. Producer will NOT write.");
             return;
         }
+
 
         // ---- Begin file watching ----
         try (RandomAccessFile reader = new RandomAccessFile(filePath.toFile(), "r")) {
