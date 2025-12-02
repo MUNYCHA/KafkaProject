@@ -14,7 +14,6 @@ public class AppMain {
 
         ConfigLoader config = new ConfigLoader("config.json");
 
-        // Create database instance ONCE (using DatabaseConfig directly)
         AlertDatabase db = new AlertDatabase(config.getDatabase());
 
         ExecutorService executor = Executors.newFixedThreadPool(config.getTopics().size());
