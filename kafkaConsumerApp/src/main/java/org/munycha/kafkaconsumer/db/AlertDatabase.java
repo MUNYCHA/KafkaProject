@@ -14,11 +14,11 @@ public class AlertDatabase {
     private final String password;
     private final String table;
 
-    public AlertDatabase(DatabaseConfig cfg) {
-        this.url = cfg.getUrl();
-        this.user = cfg.getUser();
-        this.password = cfg.getPassword();
-        this.table = cfg.getTable();
+    public AlertDatabase(DatabaseConfig dbConfig) {
+        this.url = dbConfig.getUrl();
+        this.user = dbConfig.getUser();
+        this.password = dbConfig.getPassword();
+        this.table = dbConfig.getTable();
 
         loadDriver();
     }
