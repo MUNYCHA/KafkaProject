@@ -104,6 +104,9 @@ public class TopicConsumer implements Runnable {
         ensureTopicExists();
         ensureOutputFileExists();
 
+        this.consumer.subscribe(Collections.singletonList(this.topic));
+
+
         try (FileWriter writer = new FileWriter(outputFile.toFile(), true)) {
             System.out.printf("Listening to %s → writing to %s%n", topic, outputFile);
 
