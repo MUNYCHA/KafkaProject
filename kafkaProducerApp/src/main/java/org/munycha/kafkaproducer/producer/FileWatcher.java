@@ -27,11 +27,20 @@ public class FileWatcher implements Runnable {
     @Override
     public void run() {
 
+
+        //check topic exists
+        if (!KafkaTopicValidator.topicExists(topic, producerProps)) {
+            System.err.println("[Kafka] Topic " + topic + " does NOT exist. Skipping watcher for this file.");
+            return;
+        }
+
+        //check file exists
         if (!Files.exists(filePath)) {
             System.err.println("Producer output file does NOT exist: " + filePath);
             System.err.println("Please create it manually. Producer will NOT write.");
             return;
         }
+
 
 
         // ---- Begin file watching ----
@@ -58,11 +67,6 @@ public class FileWatcher implements Runnable {
                                 .trim();
 
                         if (msg.isBlank()) continue;
-
-                        if (!KafkaTopicValidator.topicExists(topic, producerProps)) {
-                            System.err.println("[Kafka] Topic does NOT exist: " + topic);
-                            throw new RuntimeException("Kafka topic does not exist: " + topic);
-                        }
 
                         producer.send(new ProducerRecord<>(topic, msg), (metadata, ex) -> {
                             if (ex != null) {
