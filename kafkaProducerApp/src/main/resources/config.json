@@ -6,6 +6,7 @@
     { "path": "/home/kafkaproducer/test_log_file/app3.log", "topic": "app3-topic" },
     { "path": "/home/kafkaproducer/test_log_file/app4.log", "topic": "app4-topic" },
     { "path": "/home/kafkaproducer/test_log_file/system.log", "topic": "system-topic" },
-    { "path": "/home/kafkaproducer/test_log_file/server.log", "topic": "server-topic" }
+    { "path": "/home/kafkaproducer/test_log_file/server.log", "topic": "server-topic" },
+    { "path": "/home/kafkaproducer/test_log_file/server1.log", "topic": "server1-topic" }
   ]
 }

@@ -4,6 +4,7 @@ import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.munycha.kafkaconsumer.telegram.TelegramNotifier;
 import org.munycha.kafkaconsumer.db.AlertDatabase;
+import org.munycha.kafkaconsumer.utility.KafkaTopicValidator;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -51,6 +52,11 @@ public class TopicConsumer implements Runnable {
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         props.put(ConsumerConfig.GROUP_ID_CONFIG, "file-log-consumer-" + topic);
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
+
+        if (!KafkaTopicValidator.topicExists(topic, props)) {
+            System.err.println("[Kafka] Topic does NOT exist: " + topic);
+            throw new RuntimeException("Kafka topic does not exist: " + topic);
+        }
 
         KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props);
         consumer.subscribe(Collections.singletonList(topic));
@@ -104,7 +110,7 @@ public class TopicConsumer implements Runnable {
         System.out.printf("[%s] (%s) %s%n",
                 java.time.LocalTime.now(), record.topic(), msg);
 
-        
+
         if (Files.exists(outputFile)) {
             writer.write(msg + System.lineSeparator());
             writer.flush();

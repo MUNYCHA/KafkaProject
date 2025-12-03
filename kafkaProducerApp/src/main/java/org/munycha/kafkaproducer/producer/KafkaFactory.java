@@ -8,13 +8,23 @@ import java.util.Properties;
 
 public class KafkaFactory {
 
-    public static KafkaProducer<String, String> create(String bootstrapServers) {
-        Properties props = new Properties();
-        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-        props.put(ProducerConfig.ACKS_CONFIG, "1");
-        props.put(ProducerConfig.LINGER_MS_CONFIG, "0");
-        return new KafkaProducer<>(props);
+    private final Properties producerProps;
+
+    public  KafkaFactory(String bootstrapServers) {
+        producerProps  = new Properties();
+        producerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        producerProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+        producerProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+        producerProps.put(ProducerConfig.ACKS_CONFIG, "1");
+        producerProps.put(ProducerConfig.LINGER_MS_CONFIG, "0");
+    }
+
+    public KafkaProducer<String ,String> createProducer(){
+        return new KafkaProducer<>(producerProps);
+    }
+
+
+    public Properties getProducerProps() {
+        return producerProps;
     }
 }

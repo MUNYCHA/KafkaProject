@@ -8,6 +8,7 @@ import org.munycha.kafkaproducer.producer.KafkaFactory;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -17,8 +18,13 @@ public class AppMain {
         // Load config.json from the current working directory (parent level)
         ConfigLoader config = new ConfigLoader("config.json");
 
-        // Create ONE shared Kafka producer
-        KafkaProducer<String, String> producer = KafkaFactory.create(config.getBootstrapServers());
+
+        //Initialize kafka factory
+        KafkaFactory factory = new KafkaFactory(config.getBootstrapServers());
+
+        //Create kafka producer
+        KafkaProducer<String,String> producer = factory.createProducer();
+
 
         // Thread pool — one thread per file
         ExecutorService executor = Executors.newFixedThreadPool(config.getFiles().size());
@@ -28,7 +34,8 @@ public class AppMain {
             String path = f.getPath();
             String topic = f.getTopic();
             Path filePath = Paths.get(path);
-            executor.submit(new FileWatcher(filePath, topic, producer));
+            Properties producerProps = factory.getProducerProps();
+            executor.submit(new FileWatcher(filePath, topic, producer,producerProps));
         }
 
         // Graceful shutdown

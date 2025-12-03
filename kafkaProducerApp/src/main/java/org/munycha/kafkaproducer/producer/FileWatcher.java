@@ -2,22 +2,26 @@ package org.munycha.kafkaproducer.producer;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.munycha.kafkaproducer.utility.KafkaTopicValidator;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Properties;
 
 public class FileWatcher implements Runnable {
     private final Path filePath;
     private final String topic;
     private final KafkaProducer<String, String> producer;
+    private final Properties producerProps;
 
-    public FileWatcher(Path filePath, String topic, KafkaProducer<String, String> producer) {
+    public FileWatcher(Path filePath, String topic, KafkaProducer<String, String> producer, Properties producerProps) {
         this.filePath = filePath;
         this.topic = topic;
         this.producer = producer;
+        this.producerProps = producerProps;
     }
 
     @Override
@@ -55,6 +59,11 @@ public class FileWatcher implements Runnable {
 
                         if (msg.isBlank()) continue;
 
+                        if (!KafkaTopicValidator.topicExists(topic, producerProps)) {
+                            System.err.println("[Kafka] Topic does NOT exist: " + topic);
+                            throw new RuntimeException("Kafka topic does not exist: " + topic);
+                        }
+
                         producer.send(new ProducerRecord<>(topic, msg), (metadata, ex) -> {
                             if (ex != null) {
                                 System.err.printf("[%s] Topic: %-15s Error: %s%n",
@@ -79,7 +88,12 @@ public class FileWatcher implements Runnable {
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            try { producer.flush(); } catch (Exception ignored) {}
+            try
+            {
+                producer.flush();
+                producer.close();
+            }
+            catch (Exception ignored) {}
         }
     }
 
