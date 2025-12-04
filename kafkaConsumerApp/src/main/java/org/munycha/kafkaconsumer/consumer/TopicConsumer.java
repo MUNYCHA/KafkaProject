@@ -70,6 +70,7 @@ public class TopicConsumer implements Runnable {
 
         this.consumerFactory = new KafkaConsumerFactory(bootstrapServers, topic);
         this.consumer = this.consumerFactory.createConsumer();
+        this.consumer.subscribe(Collections.singletonList(this.topic));
         this.notifier = new TelegramNotifier(botToken, chatId);
     }
 
@@ -104,7 +105,6 @@ public class TopicConsumer implements Runnable {
         ensureTopicExists();
         ensureOutputFileExists();
 
-        this.consumer.subscribe(Collections.singletonList(this.topic));
 
 
         try (FileWriter writer = new FileWriter(outputFile.toFile(), true)) {
