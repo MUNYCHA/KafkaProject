@@ -32,7 +32,7 @@
             <version>2.0.13</version>
         </dependency>
 
-        <!-- MySQL JDBC Driver (REQUIRED) -->
+        <!-- MySQL JDBC Driver -->
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
