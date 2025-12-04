@@ -22,48 +22,35 @@ public class AppMain {
 
     public static void main(String[] args) throws Exception {
 
-        // ---------------------------------------------------------
-        // 1. Load application configuration from config.json
-        // ---------------------------------------------------------
+        // Load application configuration from JSON
         ConfigLoader config = new ConfigLoader("config.json");
 
-        // ---------------------------------------------------------
-        // 2. Initialize a KafkaProducerFactory using the bootstrap servers
-        // ---------------------------------------------------------
+        // Initialize a KafkaProducerFactory with the configured bootstrap servers
         KafkaProducerFactory factory = new KafkaProducerFactory(config.getBootstrapServers());
 
-        // ---------------------------------------------------------
-        // 3. Create a single shared KafkaProducer instance
-        //    (reused across all FileWatcher threads)
-        // ---------------------------------------------------------
+        // Create a single shared KafkaProducer instance (used by all FileWatcher threads)
         KafkaProducer<String, String> producer = factory.createProducer();
 
-        // ---------------------------------------------------------
-        // 4. Set up a thread pool (1 thread per file being watched)
-        // ---------------------------------------------------------
+        // Create a thread pool — one worker thread per watched file
         ExecutorService executor = Executors.newFixedThreadPool(config.getFiles().size());
 
-        // ---------------------------------------------------------
-        // 5. Start a FileWatcher thread for each file-to-topic mapping
-        // ---------------------------------------------------------
+        // Start a FileWatcher for each file-to-topic mapping defined in the configuration
         for (FileItem f : config.getFiles()) {
-            String path = f.getPath();                      // File path to watch
-            String topic = f.getTopic();                    // Kafka topic to produce to
-            Path filePath = Paths.get(path);                // Convert to Path object
-            Properties producerProps = factory.getProducerProps();  // For topic validation
+            String path = f.getPath();
+            String topic = f.getTopic();
+            Path filePath = Paths.get(path);
+            Properties producerProps = factory.getProducerProps();
 
-            // Submit a new FileWatcher task to the executor
+            // Submit the FileWatcher task to the executor
             executor.submit(new FileWatcher(filePath, topic, producer, producerProps));
         }
 
-        // ---------------------------------------------------------
-        // 6. Register a shutdown hook to gracefully close resources
-        // ---------------------------------------------------------
+        // Register a shutdown hook to close Kafka producer and stop all threads gracefully
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.out.println("Shutting down producer...");
             try { producer.flush(); } catch (Exception ignored) {}
-            producer.close();              // Close Kafka producer
-            executor.shutdownNow();        // Stop all threads
+            producer.close();
+            executor.shutdownNow();
         }));
     }
 }
