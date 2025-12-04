@@ -14,6 +14,8 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * TopicConsumer is a Runnable task that continuously consumes messages
@@ -44,6 +46,39 @@ public class TopicConsumer implements Runnable {
 
     // Consumer factory used to create the Kafka consumer
     private final KafkaConsumerFactory consumerFactory;
+
+    // Create a thread pool for Telegram notifications
+    private static final ExecutorService alertExecutor = Executors.newFixedThreadPool(5);
+
+    // Create a thread pool for database saving
+    private static final ExecutorService dbExecutor = Executors.newFixedThreadPool(3);
+
+
+    // Shutdown thread pool alertExecutor and dbExecutor
+    static {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("Shutting down executors...");
+
+            alertExecutor.shutdown();
+            dbExecutor.shutdown();
+
+            try {
+                if (!alertExecutor.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS)) {
+                    alertExecutor.shutdownNow();
+                }
+                if (!dbExecutor.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS)) {
+                    dbExecutor.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                alertExecutor.shutdownNow();
+                dbExecutor.shutdownNow();
+            }
+
+            System.out.println("All executors shut down cleanly.");
+        }));
+    }
+
+
 
     /**
      * Constructs a TopicConsumer with all required configuration.
@@ -171,10 +206,11 @@ public class TopicConsumer implements Runnable {
                         " Topic: " + topic + "\n" +
                         " Message: " + msg;
 
-        // Send Telegram message asynchronously
-        new Thread(() -> this.notifier.sendMessage(alertMessage)).start();
+        // Send message to Telegram asynchronously
+        alertExecutor.submit(() -> this.notifier.sendMessage(alertMessage));
 
-        // Save alert to database
-        this.alertDatabase.saveAlert(topic, timestamp, msg);
+        // Save alert to database asynchronously
+        dbExecutor.submit(() -> this.alertDatabase.saveAlert(topic, timestamp, msg));
+
     }
 }
