@@ -10,7 +10,7 @@ public class TelegramNotifier {
 
     private final String botToken;
     private final String chatId;
-    private long lastSend = 0;       // Timestamp of last sent message (for rate limiting)
+    private long lastSend = 0;
 
     public TelegramNotifier(String botToken, String chatId) {
         this.botToken = botToken;
@@ -19,9 +19,9 @@ public class TelegramNotifier {
 
     public synchronized void sendMessage(String message) {
         try {
-            enforceRateLimit();      // Wait if sending too frequently
-            sendRequest(message);    // Send HTTPS request to Telegram API
-            lastSend = System.currentTimeMillis();  // Update last sent timestamp
+            enforceRateLimit();
+            sendRequest(message);
+            lastSend = System.currentTimeMillis();
         } catch (Exception e) {
             System.err.println("[TelegramNotifier] Error: " + e.getMessage());
         }
@@ -33,7 +33,7 @@ public class TelegramNotifier {
         long diff = now - lastSend;
 
         if (diff < 1000) {
-            Thread.sleep(1000 - diff);  // Sleep remaining time to satisfy 1s rate limit
+            Thread.sleep(1000 - diff);
         }
     }
 
