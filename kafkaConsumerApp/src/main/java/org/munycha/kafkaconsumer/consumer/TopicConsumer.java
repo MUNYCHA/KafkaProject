@@ -17,34 +17,15 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-/**
- * TopicConsumer is a Runnable task that continuously consumes messages
- * from a specific Kafka topic and writes them to a log file.
- *
- * It also detects alert messages based on user-defined keywords
- * and sends those alerts to Telegram and stores them in a database.
- */
+
 public class TopicConsumer implements Runnable {
 
-    // Kafka topic to consume from
     private final String topic;
-
-    // Output log file path for storing consumed messages
     private final Path outputFile;
-
-    // List of keywords that trigger alerts
     private final List<String> alertKeywords;
-
-    // Database instance used for persisting alert logs
     private final AlertDatabase alertDatabase;
-
-    // Kafka consumer instance
     private final KafkaConsumer<String, String> consumer;
-
-    // Telegram alert notifier
     private final TelegramNotifier notifier;
-
-    // Consumer factory used to create the Kafka consumer
     private final KafkaConsumerFactory consumerFactory;
 
     // Create a thread pool for Telegram notifications
@@ -79,18 +60,6 @@ public class TopicConsumer implements Runnable {
     }
 
 
-
-    /**
-     * Constructs a TopicConsumer with all required configuration.
-     *
-     * @param bootstrapServers Kafka server addresses
-     * @param topic            Kafka topic name to consume from
-     * @param outputFile       Path to the file where consumed messages will be written
-     * @param botToken         Telegram bot token
-     * @param chatId           Telegram chat ID for sending alerts
-     * @param alertKeywords    List of keywords to detect in messages
-     * @param alertDatabase    Database used to store alert entries
-     */
     public TopicConsumer(String bootstrapServers,
                          String topic,
                          Path outputFile,
@@ -109,10 +78,7 @@ public class TopicConsumer implements Runnable {
         this.notifier = new TelegramNotifier(botToken, chatId);
     }
 
-    /**
-     * Verifies that the configured output file exists.
-     * If it doesn't, a warning is printed and the consumer continues.
-     */
+
     private void ensureOutputFileExists() {
         if (!Files.exists(outputFile)) {
             System.err.println(" Output file does NOT exist: " + outputFile);
@@ -120,10 +86,7 @@ public class TopicConsumer implements Runnable {
         }
     }
 
-    /**
-     * Verifies that the specified Kafka topic exists.
-     * Throws a runtime exception if the topic is not found.
-     */
+
     private void ensureTopicExists() {
         if (!KafkaTopicValidator.topicExists(topic, this.consumerFactory.getConsumerProps())) {
             System.err.println("[Kafka] Topic does NOT exist: " + topic);
@@ -131,16 +94,12 @@ public class TopicConsumer implements Runnable {
         }
     }
 
-    /**
-     * Starts the consumer loop. Continuously polls Kafka for new messages,
-     * writes them to the output file, and checks for alert keywords.
-     */
+
     @Override
     public void run() {
+
         ensureTopicExists();
         ensureOutputFileExists();
-
-
 
         try (FileWriter writer = new FileWriter(outputFile.toFile(), true)) {
             System.out.printf("Listening to %s → writing to %s%n", topic, outputFile);
@@ -160,15 +119,6 @@ public class TopicConsumer implements Runnable {
         }
     }
 
-    /**
-     * Handles a single Kafka record:
-     * - Writes it to the output file
-     * - Triggers alert processing if keywords are matched
-     *
-     * @param record the Kafka record
-     * @param writer the file writer
-     * @throws IOException if file writing fails
-     */
     private void handleRecord(ConsumerRecord<String, String> record, FileWriter writer) throws IOException {
         String msg = record.value();
         String lower = msg.toLowerCase();
@@ -188,13 +138,7 @@ public class TopicConsumer implements Runnable {
         }
     }
 
-    /**
-     * Processes an alert by sending it to Telegram and storing it in the database.
-     * This is run in a separate thread to avoid blocking the main consumer loop.
-     *
-     * @param topic the Kafka topic name
-     * @param msg   the message that triggered the alert
-     */
+
     private void processAlert(String topic, String msg) {
         LocalDateTime timestamp = LocalDateTime.now();
         String displayTimestamp = timestamp.format(
