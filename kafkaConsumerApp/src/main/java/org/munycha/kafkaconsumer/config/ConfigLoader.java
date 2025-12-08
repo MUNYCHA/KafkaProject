@@ -1,8 +1,8 @@
 package org.munycha.kafkaconsumer.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
+
+import java.io.*;
 import java.util.List;
 
 public class ConfigLoader {
@@ -14,15 +14,13 @@ public class ConfigLoader {
     private final List<String> alertKeywords;
     private final DatabaseConfig database;
 
-
     public ConfigLoader(String filePath) throws Exception {
 
-        InputStream inputStream = getClass().getClassLoader().getResourceAsStream(filePath);
+        InputStream inputStream = loadConfigFile(filePath);
         if (inputStream == null) {
-            throw new FileNotFoundException("Config file not found in resources: " + filePath);
+            throw new FileNotFoundException("Config file not found in external path or resources: " + filePath);
         }
 
-        // Deserialize JSON to ConfigData POJO
         ObjectMapper mapper = new ObjectMapper();
         ConfigData data = mapper.readValue(inputStream, ConfigData.class);
 
@@ -34,29 +32,23 @@ public class ConfigLoader {
         this.database = data.getDatabase();
     }
 
+    private InputStream loadConfigFile(String filePath) throws FileNotFoundException {
 
+        File externalFile = new File(filePath);
 
-    public String getBootstrapServers() {
-        return bootstrapServers;
+        if (externalFile.exists()) {
+            System.out.println("[ConfigLoader] Loading EXTERNAL config: " + externalFile.getAbsolutePath());
+            return new FileInputStream(externalFile);
+        }
+
+        System.out.println("[ConfigLoader] External config not found. Trying INTERNAL resource: " + filePath);
+        return getClass().getClassLoader().getResourceAsStream(filePath);
     }
 
-    public String getTelegramBotToken() {
-        return telegramBotToken;
-    }
-
-    public String getTelegramChatId() {
-        return telegramChatId;
-    }
-
-    public List<TopicConfig> getTopics() {
-        return topics;
-    }
-
-    public List<String> getAlertKeywords() {
-        return alertKeywords;
-    }
-
-    public DatabaseConfig getDatabase() {
-        return database;
-    }
+    public String getBootstrapServers() { return bootstrapServers; }
+    public String getTelegramBotToken() { return telegramBotToken; }
+    public String getTelegramChatId() { return telegramChatId; }
+    public List<TopicConfig> getTopics() { return topics; }
+    public List<String> getAlertKeywords() { return alertKeywords; }
+    public DatabaseConfig getDatabase() { return database; }
 }

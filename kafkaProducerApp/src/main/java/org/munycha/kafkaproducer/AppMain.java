@@ -18,7 +18,7 @@ public class AppMain {
     public static void main(String[] args) throws Exception {
 
         // Load application configuration from JSON
-        ConfigLoader config = new ConfigLoader("config.json");
+        ConfigLoader config = new ConfigLoader("config/producer_config.json");
 
         // Initialize a KafkaProducerFactory with the configured bootstrap servers
         KafkaProducerFactory factory = new KafkaProducerFactory(config.getBootstrapServers());

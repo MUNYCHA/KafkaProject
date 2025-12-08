@@ -14,7 +14,7 @@ public class AppMain {
     public static void main(String[] args) throws Exception {
 
         // Load application configuration from JSON file
-        ConfigLoader config = new ConfigLoader("config.json");
+        ConfigLoader config = new ConfigLoader("config/consumer_config.json");
 
         // Initialize alert database
         AlertDatabase alertDatabase = new AlertDatabase(config.getDatabase());

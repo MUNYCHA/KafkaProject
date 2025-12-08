@@ -1,8 +1,8 @@
 package org.munycha.kafkaproducer.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
+
+import java.io.*;
 import java.util.List;
 
 public class ConfigLoader {
@@ -12,17 +12,30 @@ public class ConfigLoader {
 
     public ConfigLoader(String filePath) throws Exception {
 
-        InputStream inputStream = getClass().getClassLoader().getResourceAsStream(filePath);
+        InputStream inputStream = loadConfigFile(filePath);
         if (inputStream == null) {
-            throw new FileNotFoundException("Config file not found in resources: " + filePath);
+            throw new FileNotFoundException("Config file not found (external or internal): " + filePath);
         }
 
-        // Parse the JSON file into a ConfigData object
         ObjectMapper mapper = new ObjectMapper();
         ConfigData data = mapper.readValue(inputStream, ConfigData.class);
 
         this.bootstrapServers = data.getBootstrapServers();
         this.files = data.getFiles();
+    }
+
+
+    private InputStream loadConfigFile(String filePath) throws FileNotFoundException {
+
+        File externalFile = new File(filePath);
+
+        if (externalFile.exists()) {
+            System.out.println("[ConfigLoader] Loading EXTERNAL config: " + externalFile.getAbsolutePath());
+            return new FileInputStream(externalFile);
+        }
+
+        System.out.println("[ConfigLoader] External config not found. Loading INTERNAL config: " + filePath);
+        return getClass().getClassLoader().getResourceAsStream(filePath);
     }
 
     public String getBootstrapServers() {
