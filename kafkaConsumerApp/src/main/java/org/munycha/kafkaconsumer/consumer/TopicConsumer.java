@@ -16,7 +16,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
+import java.util.concurrent.atomic.AtomicLong;
 
 public class TopicConsumer implements Runnable {
 
@@ -28,14 +28,13 @@ public class TopicConsumer implements Runnable {
     private final TelegramNotifier notifier;
     private final KafkaConsumerFactory consumerFactory;
 
-    // Create a thread pool for Telegram notifications
     private static final ExecutorService alertExecutor = Executors.newFixedThreadPool(5);
-
-    // Create a thread pool for database saving
     private static final ExecutorService dbExecutor = Executors.newFixedThreadPool(3);
 
 
-    // Shutdown thread pool alertExecutor and dbExecutor
+    private static final AtomicLong CONSUMED_COUNTER = new AtomicLong(0);
+
+
     static {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.out.println("Shutting down executors...");
@@ -44,12 +43,12 @@ public class TopicConsumer implements Runnable {
             dbExecutor.shutdown();
 
             try {
-                if (!alertExecutor.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS)) {
+                if (!alertExecutor.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS))
                     alertExecutor.shutdownNow();
-                }
-                if (!dbExecutor.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS)) {
+
+                if (!dbExecutor.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS))
                     dbExecutor.shutdownNow();
-                }
+
             } catch (InterruptedException e) {
                 alertExecutor.shutdownNow();
                 dbExecutor.shutdownNow();
@@ -67,6 +66,7 @@ public class TopicConsumer implements Runnable {
                          String chatId,
                          List<String> alertKeywords,
                          AlertDatabase alertDatabase) {
+
         this.topic = topic;
         this.outputFile = outputFile;
         this.alertKeywords = alertKeywords;
@@ -75,6 +75,7 @@ public class TopicConsumer implements Runnable {
         this.consumerFactory = new KafkaConsumerFactory(bootstrapServers, topic);
         this.consumer = this.consumerFactory.createConsumer();
         this.consumer.subscribe(Collections.singletonList(this.topic));
+
         this.notifier = new TelegramNotifier(botToken, chatId);
     }
 
@@ -119,18 +120,31 @@ public class TopicConsumer implements Runnable {
         }
     }
 
+
+
     private void handleRecord(ConsumerRecord<String, String> record, FileWriter writer) throws IOException {
+
+
+        long id = CONSUMED_COUNTER.incrementAndGet();
+
         String msg = record.value();
         String lower = msg.toLowerCase();
 
-        System.out.printf("[%s] (%s) %s%n",
-                java.time.LocalTime.now(), record.topic(), msg);
 
+        System.out.printf("[CONSUMED #%d] [%s] (%s) %s%n",
+                id,
+                java.time.LocalTime.now(),
+                record.topic(),
+                msg
+        );
+
+        // Write to output file if exists
         if (Files.exists(outputFile)) {
             writer.write(msg + System.lineSeparator());
             writer.flush();
         }
 
+        // Keyword alert check
         boolean alert = this.alertKeywords.stream().anyMatch(lower::contains);
 
         if (alert) {
@@ -139,10 +153,13 @@ public class TopicConsumer implements Runnable {
     }
 
 
+
     private void processAlert(String topic, String msg) {
         LocalDateTime timestamp = LocalDateTime.now();
+
         String displayTimestamp = timestamp.format(
-                java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+        );
 
         String alertMessage =
                 "ALERT\n" +
@@ -150,11 +167,8 @@ public class TopicConsumer implements Runnable {
                         " Topic: " + topic + "\n" +
                         " Message: " + msg;
 
-        // Send message to Telegram asynchronously
         alertExecutor.submit(() -> this.notifier.sendMessage(alertMessage));
 
-        // Save alert to database asynchronously
         dbExecutor.submit(() -> this.alertDatabase.saveAlert(topic, timestamp, msg));
-
     }
 }

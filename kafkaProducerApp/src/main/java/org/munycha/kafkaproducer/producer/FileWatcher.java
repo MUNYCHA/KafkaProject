@@ -8,6 +8,7 @@ import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class FileWatcher implements Runnable {
 
@@ -15,6 +16,8 @@ public class FileWatcher implements Runnable {
     private final String topic;
     private final KafkaProducer<String, String> producer;
     private final Properties producerProps;
+
+    private static final AtomicLong PRODUCED_COUNTER = new AtomicLong(0);
 
     public FileWatcher(Path filePath, String topic, KafkaProducer<String, String> producer, Properties producerProps) {
         this.filePath = filePath;
@@ -41,7 +44,8 @@ public class FileWatcher implements Runnable {
 
         try (RandomAccessFile reader = new RandomAccessFile(filePath.toFile(), "r")) {
             long filePointer = reader.length();
-            System.out.printf("[%s] Watching file: %s -> Topic: %s%n", java.time.LocalTime.now(), filePath, topic);
+            System.out.printf("[%s] Watching file: %s -> Topic: %s%n",
+                    java.time.LocalTime.now(), filePath, topic);
 
             while (!Thread.currentThread().isInterrupted()) {
 
@@ -57,25 +61,30 @@ public class FileWatcher implements Runnable {
 
                     while ((line = reader.readLine()) != null) {
                         String msg = line
-                                .replace("\uFEFF", "")  // Remove BOM if present
+                                .replace("\uFEFF", "")
                                 .replace("\r", "")
                                 .trim();
 
                         if (msg.isBlank()) continue;
 
-                        producer.send(new ProducerRecord<>(topic, msg), (metadata, ex) -> {
+                        // --- ADD MESSAGE COUNTER ----
+                        long id = PRODUCED_COUNTER.incrementAndGet();
+                        String finalMsg = id + " | " + msg;
+
+                        producer.send(new ProducerRecord<>(topic, finalMsg), (metadata, ex) -> {
                             if (ex != null) {
-                                System.err.printf("[%s] Topic: %-15s Error: %s%n",
-                                        java.time.LocalTime.now(), topic, ex.getMessage());
+                                System.err.printf("[%s] [ERROR] Topic=%s | #%d | %s%n",
+                                        java.time.LocalTime.now(), topic, id, ex.getMessage());
                             } else {
-                                System.out.printf("[%s] Topic: %-15s Sent message: %s%n",
-                                        java.time.LocalTime.now(), topic, msg);
+                                System.out.printf("[%s] [PRODUCED #%d] Topic=%s → %s%n",
+                                        java.time.LocalTime.now(), id, topic, msg);
                             }
                         });
                     }
 
                     filePointer = reader.getFilePointer();
                 }
+
                 try {
                     Thread.sleep(500);
                 } catch (InterruptedException ie) {
