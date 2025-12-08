@@ -1,19 +1,31 @@
+
+---
+
 # ⚙️ Kafka File Log Producer
 
-This project **monitors local log files** and sends new lines to **Kafka topics** in real time.  
-Each file is linked to a Kafka topic (for example, `app1.log` → `app1-topic`).
+A lightweight Java-based log ingestion service that **monitors local log files** in real time and streams every new line directly into **Kafka topics**.
+Each file is mapped to a Kafka topic (e.g., `app1.log` → `app1-topic`), enabling flexible and scalable log forwarding.
 
 ---
 
 ## 🧩 How It Works
 
-1. The app reads **`config.json`** to get:
-    - Kafka server address (`bootstrapServers`)
-    - A list of files and their corresponding Kafka topics
-2. It starts a **thread for each file**.
-3. Each thread:
-    - Watches the file for new lines
-    - Sends each new line as a Kafka message to the configured topic
+1. The application reads **`config.json`**, which defines:
+
+   * Kafka bootstrap servers
+   * Files to watch
+   * Target Kafka topics for each file
+
+2. Before starting, the app uses **`KafkaTopicValidator`** to confirm all Kafka topics exist.
+
+3. A **dedicated thread** is launched for each file.
+
+4. Each thread continuously:
+
+   * Watches the file for newly appended lines
+   * Sends each new line to the specified Kafka topic
+
+5. The program runs indefinitely until manually stopped.
 
 ---
 
@@ -30,37 +42,46 @@ Each file is linked to a Kafka topic (for example, `app1.log` → `app1-topic`).
 }
 ```
 
-✅ **To add more files to watch:**  
-Add another entry in the `"files"` list like this:
+### ➕ Add More Files
+
+Just add a new entry:
+
 ```json
 { "path": "/home/kafkaproducer/log_file/newapp.log", "topic": "newapp-topic" }
 ```
-Restart the producer — it will automatically begin watching the new file and sending logs to the new topic.
+
+Restart the app and it will automatically begin monitoring the new file.
 
 ---
 
 ## 🧰 Requirements
 
-- Java 17 or higher
-- Apache Kafka 4.x (broker running)
-- Kafka topics already created
+* **Java 17+**
+* **Apache Kafka 4.x** running on your server
+* Kafka topics created (validated at startup)
+* Read permissions on the watched log files
 
 ---
 
-## ▶️ How to Run
+## ▶️ Running the Application
 
-1. **Build the JAR file:**
-   ```bash
-   mvn clean package
-   ```
+### 1. Build the JAR
 
-2. **Run the program:**
-   ```bash
-   java -jar target/testKafkaProducer-1.0.jar
-   ```
-
-You’ll see console logs like:
+```bash
+mvn clean package
 ```
+
+### 2. Run the JAR
+
+```bash
+java -jar target/KafkaProducerApp-1.0.jar
+```
+
+### Example Console Output
+
+```
+[21:02:42] Validated topic exists: app1-topic
+[21:02:42] Validated topic exists: app2-topic
 [21:02:45] Watching file: /home/kafkaproducer/log_file/app1.log -> Topic: app1-topic
 [21:02:50] Topic: app1-topic Sent message: INFO Application started
 ```
@@ -75,43 +96,53 @@ Press **Ctrl + C** to stop gracefully.
 src/
  └── main/
      ├── java/
-     │   └── org/munycha/kafkaproducer
-     │       ├── AppMain.java                 # Entry point
+     │   └── org/munycha/kafkaproducer/
+     │       ├── AppMain.java                       # Program entry point
      │       ├── config/
-     │       │   ├── ConfigLoader.java        # Loads JSON config
-     │       │   ├── ConfigData.java          # Config model
-     │       │   └── FileItem.java            # One file/topic entry
-     │       └── producer/
-     │           ├── FileWatcher.java         # Watches files & sends new lines to Kafka
-     │           └── KafkaFactory.java        # Creates Kafka producer
+     │       │   ├── ConfigLoader.java              # Reads and parses config.json
+     │       │   ├── ConfigData.java                # Represents full config
+     │       │   └── FileItem.java                  # One file/topic mapping
+     │       ├── producer/
+     │       │   ├── FileWatcher.java               # Watches file + sends logs to Kafka
+     │       │   └── KafkaFactory.java              # Creates KafkaProducer instance
+     │       └── utility/
+     │           └── KafkaTopicValidator.java       # Validates Kafka topics before startup
      └── resources/
-         └── config.json                      # Configuration file
+         ├── config.json                            # Main application configuration
+         └── simplelogger.properties                # Controls SLF4J logging levels
+
 ```
 
 ---
 
 ## 🧩 Class Overview
 
-| Class | Purpose |
-|--------|----------|
-| `AppMain` | Starts all watchers and manages threads |
-| `FileWatcher` | Monitors file changes and sends new lines to Kafka |
-| `ConfigLoader` | Reads settings from `config.json` |
-| `FileItem` | Represents one file → topic mapping |
-| `ConfigData` | Represents the full structure of `config.json` (bootstrapServers + list of FileItem objects) |
-| `KafkaFactory` | Creates and configures the Kafka producer |
+| Class                   | Purpose                                                                |
+|-------------------------| ---------------------------------------------------------------------- |
+| **AppMain**             | Loads configuration, validates topics, and starts all watcher threads  |
+| **FileWatcher**         | Streams new log lines to Kafka (tail-like behavior)                    |
+| **KafkaFactory**        | Creates and configures Kafka producers                                 |
+| **ConfigLoader**        | Reads `config.json` using Jackson                                      |
+| **ConfigData**          | Represents full configuration (bootstrap + file list)                  |
+| **FileItem**            | Represents a single file → topic assignment                            |
+| **KafkaTopicValidator** | Checks if Kafka topics exist before startup; prevents misconfiguration |
 
 ---
 
-## 💡 Tips
+## 💡 Tips & Best Practices
 
-- Keep `config.json` in `src/main/resources` or the same directory as your JAR.
-- Each file in `config.json` should exist before running the app.
-- You can use this producer together with your **Kafka File Log Consumer** app to complete an end-to-end log streaming pipeline.
+* Keep `config.json` inside `src/main/resources` for packaging convenience.
+* Ensure log files **exist before starting** the producer.
+* Use this producer with your **Kafka File Log Consumer** to build a full E2E log pipeline.
+* If you change topics or file paths, update `config.json` and restart the app.
 
 ---
 
 ## 🧑‍💻 Author
 
-**Munycha**  
-Kafka Learning Project — Java + Apache Kafka (File Watcher Producer)
+**Munycha**
+Kafka Learning Project — Java + Apache Kafka (Real-Time File Watcher Producer)
+
+---
+
+

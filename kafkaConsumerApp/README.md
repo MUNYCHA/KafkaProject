@@ -1,124 +1,142 @@
 
 ---
 
-# 🪵 Kafka Log Consumer (Multi-Topic + Telegram Alerts + MySQL Alert Logging)
+# 🪵 Kafka Log Consumer
 
-This project listens to multiple Kafka topics, writes their messages to log files, sends Telegram alerts when important keywords appear, and stores alert events into a MySQL database.
+### Multi-Topic Processing • Telegram Alerts • MySQL Logging • Topic Validation
 
-Each topic runs in its own thread for real-time processing.
+This application consumes multiple Kafka topics in real time, writes their messages to log files, sends Telegram alerts when important keywords appear, stores alert records in MySQL, **and validates Kafka topics at startup**.
+
+Every topic is handled in its own thread for fast, parallel log processing.
 
 ---
 
-## ⚙️ How It Works
+# ⚙️ How It Works
 
-1. The application loads everything from **`config.json`**:
+1. The application loads **all settings from `config.json`**:
 
    * Kafka bootstrap servers
-   * Telegram bot token
-   * Telegram chat ID
-   * Topic → output log file mapping
-   * Alert keyword list
+   * Telegram bot token & chat ID
+   * List of topics + output log file paths
+   * Alert keywords
    * MySQL connection settings
 
-2. For each Kafka topic:
+2. **KafkaTopicValidator** checks if all configured topics exist.
 
-   * A dedicated consumer thread starts
-   * Every message is written into a log file
-   * Message text is scanned for **alertKeywords**
-   * If matched:
+   * If any topic is missing → ❌ program stops
+   * Protects from silent failures
 
-      * Send Telegram alert
-      * Insert record into MySQL `alert_logs` table
+3. For each topic:
 
-3. All keywords, topics, paths, and DB settings are configured in `config.json`.
-   **No Java code changes needed.**
+   * A Kafka consumer is created using **KafkaConsumerFactory**
+   * A new thread is started (`TopicConsumer`)
+   * Each received message is:
+
+      * Written to a log file
+      * Checked for alert keywords
+      * If keyword found:
+
+         * 📢 Telegram alert sent
+         * 🗄 Record saved to MySQL
+
+4. Everything is configurable.
+   **No Java code changes needed** to add or remove topics, keywords, or alerts.
 
 ---
 
-## 📁 Configuration Files
+# 📁 Configuration Files
 
-### ✔ `config.example.json` (included in Git)
+## ✔ `config.example.json` (included in Git)
 
 ```json
 {
-  "bootstrapServers": "KAFKA_BOOTSTRAP_SERVER",
+   "bootstrapServers": "YOUR_KAFKA_BOOTSTRAP_SERVER",
 
-  "telegramBotToken": "PUT_YOUR_TELEGRAM_BOT_TOKEN_HERE",
-  "telegramChatId": "PUT_YOUR_TELEGRAM_CHAT_ID_HERE",
+   "telegramBotToken": "YOUR_TELEGRAM_BOT_TOKEN",
+   "telegramChatId": "YOUR_TELEGRAM_CHAT_ID",
 
-  "topics": [
-    { "topic": "topic-name-1", "output": "/path/to/output1.log" },
-    { "topic": "topic-name-2", "output": "/path/to/output2.log" }
-  ],
+   "topics": [
+      { "topic": "app1-topic", "output": "/path/to/logs/received_app1.log" },
+      { "topic": "app2-topic", "output": "/path/to/logs/received_app2.log" },
+      { "topic": "app3-topic", "output": "/path/to/logs/received_app3.log" },
+      { "topic": "app4-topic", "output": "/path/to/logs/received_app4.log" },
+      { "topic": "system-topic", "output": "/path/to/logs/received_system.log" },
+      { "topic": "server-topic", "output": "/path/to/logs/received_server.log" }
+   ],
 
-  "alertKeywords": [
-    "error",
-    "fail",
-    "fatal",
-    "exception",
-    "crash",
-    "timeout",
-    "warn",
-    "500",
-    "404"
-  ],
+   "alertKeywords": [
+      "error",
+      "fail",
+      "failure",
+      "fatal",
+      "exception",
+      "timeout",
+      "server error",
+      "critical",
+      "warn",
+      "warning",
+      "panic",
+      "crash",
+      "500",
+      "404",
+      "503"
+   ],
 
-  "database": {
-    "url": "jdbc:mysql://localhost:3306/logDB",
-    "user": "root",
-    "password": "YOUR_PASSWORD",
-    "table": "alert_logs"
-  }
+   "database": {
+      "url": "jdbc:mysql://YOUR_DB_HOST:3306/YOUR_DATABASE_NAME",
+      "user": "YOUR_DATABASE_USER",
+      "password": "YOUR_DATABASE_PASSWORD",
+      "table": "alert_logs"
+   }
 }
 ```
 
-### ✔ How to use it
+### Copy and customize:
 
 ```
 cp src/main/resources/config.example.json src/main/resources/config.json
 ```
 
-Edit your new `config.json` with:
+Modify:
 
-* Correct Kafka server
-* Bot token & chat ID
+* Kafka server
+* Telegram token & chat ID
 * Topic/output paths
-* Database settings
 * Alert keywords
+* DB credentials
 
 ### ❗ `config.json` is ignored by Git
 
-Your secret credentials stay safe.
+Sensitive credentials remain private.
 
 ---
 
-## 🔔 Extensible Alert Keywords
+# 🔔 Extensible Alert Keywords
 
-Alert keywords are fully configurable through `config.json`.
+Alert words are configured through `config.json`.
 
-To add new keywords:
+Example:
 
 ```json
 "alertKeywords": [
   "error",
-  "fail",
   "panic",
-  "disconnect",
   "service unavailable",
   "memory leak",
+  "disconnect",
   "unauthorized"
 ]
 ```
 
-Restart the app → done.
+Add or remove keywords anytime → restart app → done.
 
 ---
 
-## 🗄 MySQL Alert Logging
+# 🗄 MySQL Alert Logging
 
-Whenever a message matches alert keywords, it is saved into MySQL:
+When a message matches a keyword, it's saved into `alert_logs`.
 
-**Table structure:**
+### Table schema:
 
 ```sql
 CREATE TABLE alert_logs (
@@ -129,119 +147,139 @@ CREATE TABLE alert_logs (
 );
 ```
 
-Fields saved:
+Stored fields:
 
-* **topic** – Kafka topic
-* **timestamp** – message timestamp
-* **message** – full original log
+| Column      | Description                   |
+| ----------- | ----------------------------- |
+| `topic`     | Kafka topic name              |
+| `timestamp` | Time the message was consumed |
+| `message`   | Content of the log message    |
 
 ---
 
-## ▶️ Getting Your Telegram Chat ID
+# ▶️ Get Your Telegram Chat ID
 
 1. Open Telegram
-2. Search: `@userinfobot`
+2. Search for: **@userinfobot**
 3. Start the bot
-4. Copy the chat ID
+4. Copy the value of "Your chat ID"
 5. Paste into `config.json`
 
 ---
 
-## 🧰 Requirements
+# 🧰 Requirements
 
-* Java 17+
+* Java **17+**
 * Apache Kafka running
-* Kafka topics created
 * MySQL server running
-* Internet connection (Telegram API)
+* Internet access (Telegram API)
+* Kafka topics created (validated before startup)
 
 ---
 
-## ▶️ Run Instructions
+# ▶️ Run Instructions
 
-### 1. Build the JAR
+### 1. Build JAR
 
 ```
 mvn clean package
 ```
 
-### 2. Run the consumer
+### 2. Run application
 
 ```
-java -jar target/testKafkaConsumer-1.0.jar
+java -jar target/kafkaConsumerApp-1.0.jar
 ```
 
-Example output:
+Expected output:
 
 ```
 Listening to app1-topic -> writing to /home/.../received_app1.log
 [12:34:56] (app1-topic) ERROR Something bad happened
-Telegram alert sent.
-Alert inserted into database.
+
 ```
 
 ---
 
-## 📂 Project Structure
+# 📝 Logging Configuration (`simplelogger.properties`)
+
+Located in:
+
+```
+src/main/resources/simplelogger.properties
+```
+
+Controls SLF4J logging:
+
+```
+org.slf4j.simpleLogger.defaultLogLevel=warn
+org.slf4j.simpleLogger.log.org.apache.kafka=error
+```
+
+Helps suppress noisy Kafka internals and keeps console clean.
+
+---
+
+# 📂 Project Structure
 
 ```
 src/
  └── main/
      ├── java/
      │   └── com/munycha/kafkaconsumer/
-     │       ├── AppMain.java
+     │       ├── AppMain.java                         # Entry point
      │       ├── consumer/
-     │       │   └── TopicConsumer.java
+     │       │   ├── TopicConsumer.java               # Handles 1 topic in its own thread
+     │       │   └── KafkaConsumerFactory.java        # Creates KafkaConsumer instances
+     │       ├── utility/
+     │       │   └── KafkaTopicValidator.java         # Validates all topic names
      │       ├── config/
-     │       │   ├── ConfigLoader.java
-     │       │   ├── ConfigData.java
-     │       │   ├── TopicConfig.java
-     │       │   └── DatabaseConfig.java
+     │       │   ├── ConfigLoader.java                # Reads and parses config.json
+     │       │   ├── ConfigData.java                  # Full JSON configuration model
+     │       │   ├── TopicConfig.java                 # Topic + output path mapping
+     │       │   └── DatabaseConfig.java              # DB credentials + table
      │       ├── telegram/
-     │       │   └── TelegramNotifier.java
+     │       │   └── TelegramNotifier.java            # Sends alert messages w/ rate limiting
      │       └── db/
-     │           └── AlertDatabase.java
+     │           └── AlertDatabase.java               # Handles DB inserts
      └── resources/
          ├── config.example.json
-         └── config.json
-```
-
-## 🧩 Class Overview
-
-| Class              | Purpose                                                                                                                         |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
-| `AppMain`          | Loads config, starts all TopicConsumers, creates the shared DB connection, and manages consumer threads                         |
-| `TopicConsumer`    | Consumes messages from one Kafka topic, writes logs, detects alert keywords, sends Telegram alerts, and saves alerts into MySQL |
-| `ConfigLoader`     | Reads and parses `config.json` into Java objects using Jackson                                                                  |
-| `ConfigData`       | Represents the full JSON structure: Kafka config, Telegram config, topics list, alert keywords, and database settings           |
-| `TopicConfig`      | Represents a single topic→output mapping defined in `config.json`                                                               |
-| `DatabaseConfig`   | Represents MySQL settings: URL, user, password, and table name                                                                  |
-| `AlertDatabase`    | Handles MySQL connection and inserts alert records into the alert_logs table                                                    |
-| `TelegramNotifier` | Sends formatted alert messages to Telegram with built-in rate limiting                                                          |
-
-
----
-
-## 💡 Tips
-
-* Add/remove Kafka topics instantly via `config.json`.
-* Add or change alert keywords anytime.
-* Runs each topic in parallel to avoid bottlenecks.
-* Ideal for **real-time error monitoring**.
-
-### Want analytics or UI?
-
-Use the ELK stack:
-
-```
-Kafka → Logstash → Elasticsearch → Kibana
+         ├── config.json                              # User configuration (ignored by Git)
+         └── simplelogger.properties                  # NEW: SLF4J logger configuration
 ```
 
 ---
 
-## 🧑‍💻 Author
+# 🧩 Class Overview (UPDATED)
+
+| Class                    | Purpose                                                                    |
+| ------------------------ | -------------------------------------------------------------------------- |
+| **AppMain**              | Loads config, validates topics, starts all TopicConsumers                  |
+| **TopicConsumer**        | Listens to a Kafka topic, writes logs, triggers alerts, inserts DB records |
+| **KafkaConsumerFactory** | NEW: Creates configured KafkaConsumer for each topic                       |
+| **KafkaTopicValidator**  | NEW: Ensures all topics exist before starting                              |
+| **ConfigLoader**         | Reads and parses config.json                                               |
+| **ConfigData**           | Full config: Kafka, Telegram, DB, topics, keywords                         |
+| **TopicConfig**          | Represents one topic → output mapping                                      |
+| **DatabaseConfig**       | Holds MySQL connection settings                                            |
+| **AlertDatabase**        | Inserts alert rows into MySQL                                              |
+| **TelegramNotifier**     | Sends Telegram alerts with rate limiting                                   |
+
+---
+
+# 💡 Tips
+
+* Add/remove Kafka topics instantly via `config.json`
+* Add or modify alert keywords anytime
+* Consumers run in parallel threads → high throughput
+* Pairs perfectly with your Kafka File Log Producer
+* Ideal for **real-time log monitoring + alerting**
+
+---
+
+# 🧑‍💻 Author
 
 **Munycha**
-Real-time Kafka Log Consumer + Telegram Alerts + MySQL Logging System
+Real-time Kafka Log Consumer — Multi-Topic • Alerts • DB Storage • Topic Validation
 
 ---
