@@ -74,8 +74,14 @@ public class FileWatcher implements Runnable {
                                 System.err.printf("[%s] [ERROR] Topic=%s | #%d | %s%n",
                                         java.time.LocalTime.now(), topic, id, ex.getMessage());
                             } else {
-                                System.out.printf("[%s] [PRODUCED #%d] Topic=%s → %s%n",
-                                        java.time.LocalTime.now(), id, topic, msg);
+                                System.out.printf(
+                                        "[PRODUCED #%d] [%s] Topic=%s Sent message → %s%n",
+                                        id,
+                                        java.time.LocalTime.now(),
+                                        topic,
+                                        msg
+                                );
+
                             }
                         });
 

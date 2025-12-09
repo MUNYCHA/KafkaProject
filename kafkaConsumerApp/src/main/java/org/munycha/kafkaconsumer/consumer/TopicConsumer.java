@@ -131,12 +131,14 @@ public class TopicConsumer implements Runnable {
         String lower = msg.toLowerCase();
 
 
-        System.out.printf("[CONSUMED #%d] [%s] (%s) %s%n",
+        System.out.printf(
+                "[CONSUMED #%d] [%s] (%s) Received message → %s%n",
                 id,
                 java.time.LocalTime.now(),
                 record.topic(),
                 msg
         );
+
 
         // Write to output file if exists
         if (Files.exists(outputFile)) {
