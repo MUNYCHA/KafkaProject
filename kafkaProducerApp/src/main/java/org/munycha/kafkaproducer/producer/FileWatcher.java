@@ -67,11 +67,9 @@ public class FileWatcher implements Runnable {
 
                         if (msg.isBlank()) continue;
 
-                        // --- ADD MESSAGE COUNTER ----
                         long id = PRODUCED_COUNTER.incrementAndGet();
-                        String finalMsg = id + " | " + msg;
 
-                        producer.send(new ProducerRecord<>(topic, finalMsg), (metadata, ex) -> {
+                        producer.send(new ProducerRecord<>(topic, msg), (metadata, ex) -> {
                             if (ex != null) {
                                 System.err.printf("[%s] [ERROR] Topic=%s | #%d | %s%n",
                                         java.time.LocalTime.now(), topic, id, ex.getMessage());
@@ -80,6 +78,7 @@ public class FileWatcher implements Runnable {
                                         java.time.LocalTime.now(), id, topic, msg);
                             }
                         });
+
                     }
 
                     filePointer = reader.getFilePointer();
