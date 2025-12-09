@@ -28,8 +28,8 @@ public class TopicConsumer implements Runnable {
     private final TelegramNotifier notifier;
     private final KafkaConsumerFactory consumerFactory;
 
-    // Create a thread pool for Telegram notifications
-    private static final ExecutorService alertExecutor = Executors.newFixedThreadPool(5);
+    //Create a single thread executor for Telegram alerts
+    private static final ExecutorService alertExecutor = Executors.newSingleThreadExecutor();
 
     // Create a thread pool for database saving
     private static final ExecutorService dbExecutor = Executors.newFixedThreadPool(3);
