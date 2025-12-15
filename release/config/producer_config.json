@@ -1,5 +1,6 @@
 {
   "bootstrapServers": "192.168.60.135:9092",
+  "logSourceHost" : "munycha",
   "files": [
     { "path": "/home/kafkaproducer/test_log_file/app1.log", "topic": "app1-topic" },
     { "path": "/home/kafkaproducer/test_log_file/app2.log", "topic": "app2-topic" },

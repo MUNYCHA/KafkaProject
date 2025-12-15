@@ -1,8 +1,9 @@
 package org.munycha.kafkaproducer.config;
 
 public class FileItem {
-    public String path;
-    public String topic;
+
+    private String path;
+    private String topic;
 
     public FileItem() {}
 
@@ -11,6 +12,11 @@ public class FileItem {
         this.topic = topic;
     }
 
-    public String getPath() { return path; }
-    public String getTopic() { return topic; }
+    public String getPath() {
+        return path;
+    }
+
+    public String getTopic() {
+        return topic;
+    }
 }

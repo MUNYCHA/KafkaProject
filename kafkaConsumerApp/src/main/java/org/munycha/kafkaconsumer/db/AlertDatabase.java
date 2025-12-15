@@ -24,20 +24,33 @@ public class AlertDatabase {
         return DriverManager.getConnection(url, user, password);
     }
 
-    public void saveAlert(String topic, LocalDateTime timestamp, String message) {
-        String sql = "INSERT INTO " + table + " (topic, timestamp, message) VALUES (?, ?, ?)";
+    public void saveAlert(
+            String topic,
+            long eventTimestamp,
+            String logSourceHost,
+            String filePath,
+            String message
+    ) {
+        String sql =
+                "INSERT INTO " + table +
+                        " (topic, event_timestamp, log_source_host, file_path, message) " +
+                        "VALUES (?, ?, ?, ?, ?)";
 
         try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, topic);
-            stmt.setObject(2, timestamp);
-            stmt.setString(3, message);
+            stmt.setLong(2, eventTimestamp);
+            stmt.setString(3, logSourceHost);
+            stmt.setString(4, filePath);
+            stmt.setString(5, message);
+
             stmt.executeUpdate();
 
         } catch (Exception e) {
             System.err.println("[DB ERROR] Failed to save alert: " + e.getMessage());
         }
     }
+
 }
 

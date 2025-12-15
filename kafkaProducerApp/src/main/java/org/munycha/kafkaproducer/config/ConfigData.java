@@ -2,13 +2,23 @@ package org.munycha.kafkaproducer.config;
 
 import java.util.List;
 
-
 public class ConfigData {
-    public String bootstrapServers;
-    public List<FileItem> files;
+
+    private String bootstrapServers;
+    private String logSourceHost;
+    private List<FileItem> files;
 
     public ConfigData() {}
 
-    public String getBootstrapServers() { return bootstrapServers; }
-    public List<FileItem> getFiles() { return files; }
+    public String getBootstrapServers() {
+        return bootstrapServers;
+    }
+
+    public String getLogSourceHost() {
+        return logSourceHost;
+    }
+
+    public List<FileItem> getFiles() {
+        return files;
+    }
 }

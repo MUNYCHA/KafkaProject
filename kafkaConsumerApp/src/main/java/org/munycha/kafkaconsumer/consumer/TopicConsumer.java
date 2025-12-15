@@ -1,17 +1,23 @@
 package org.munycha.kafkaconsumer.consumer;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.munycha.kafkaconsumer.model.LogEvent;
 import org.munycha.kafkaconsumer.telegram.TelegramNotifier;
 import org.munycha.kafkaconsumer.db.AlertDatabase;
 import org.munycha.kafkaconsumer.utility.KafkaTopicValidator;
+
 
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -27,6 +33,7 @@ public class TopicConsumer implements Runnable {
     private final KafkaConsumer<String, String> consumer;
     private final TelegramNotifier notifier;
     private final KafkaConsumerFactory consumerFactory;
+    private final ObjectMapper mapper = new ObjectMapper();
 
     //Create a single thread executor for Telegram alerts
     private static final ExecutorService alertExecutor = Executors.newSingleThreadExecutor();
@@ -120,46 +127,68 @@ public class TopicConsumer implements Runnable {
     }
 
     private void handleRecord(ConsumerRecord<String, String> record, FileWriter writer) throws IOException {
-        String msg = record.value();
-        String lower = msg.toLowerCase();
+
+        LogEvent event = mapper.readValue(record.value(), LogEvent.class);
+
+        String msg = event.getMessage();
+        String lowerMsg = msg.toLowerCase();
+
+        String formattedTime =
+                Instant.ofEpochMilli(event.getTimestamp())
+                        .atZone(ZoneId.systemDefault())
+                        .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 
         System.out.printf(
-                "[%s] (%s) Received message → %s%n",
-                java.time.LocalTime.now(),
-                record.topic(),
+                "[%s] (%s) %s%n",
+                formattedTime,
+                event.getTopic(),
                 msg
         );
 
-
         if (Files.exists(outputFile)) {
-            writer.write(msg + System.lineSeparator());
+            writer.write(
+                    formattedTime + " [" + event.getLogSourceHost() + "] " +
+                            msg + System.lineSeparator()
+            );
             writer.flush();
         }
 
-        boolean alert = this.alertKeywords.stream().anyMatch(lower::contains);
+        boolean alert = alertKeywords.stream()
+                .anyMatch(k -> lowerMsg.contains(k));
 
         if (alert) {
-            processAlert(record.topic(), msg);
+            processAlert(event);
         }
     }
 
+    private void processAlert(LogEvent event) {
 
-    private void processAlert(String topic, String msg) {
-        LocalDateTime timestamp = LocalDateTime.now();
-        String displayTimestamp = timestamp.format(
-                java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        String formattedTime =
+                Instant.ofEpochMilli(event.getTimestamp())
+                        .atZone(ZoneId.systemDefault())
+                        .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 
         String alertMessage =
                 "ALERT\n" +
-                        " Timestamp: " + displayTimestamp + "\n" +
-                        " Topic: " + topic + "\n" +
-                        " Message: " + msg;
+                        " Time: " + formattedTime + "\n" +
+                        " Host: " + event.getLogSourceHost() + "\n" +
+                        " File: " + event.getPath() + "\n" +
+                        " Topic: " + event.getTopic() + "\n" +
+                        " Message: " + event.getMessage();
 
-        // Send message to Telegram asynchronously
-        alertExecutor.submit(() -> this.notifier.sendMessage(alertMessage));
+        alertExecutor.submit(() -> notifier.sendMessage(alertMessage));
 
-        // Save alert to database asynchronously
-        dbExecutor.submit(() -> this.alertDatabase.saveAlert(topic, timestamp, msg));
-
+        dbExecutor.submit(() ->
+                alertDatabase.saveAlert(
+                        event.getTopic(),
+                        event.getTimestamp(),
+                        event.getLogSourceHost(),
+                        event.getPath(),
+                        event.getMessage()
+                )
+        );
     }
+
+
+
 }

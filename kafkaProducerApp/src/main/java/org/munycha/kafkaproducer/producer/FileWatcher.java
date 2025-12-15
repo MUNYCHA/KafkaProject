@@ -1,7 +1,9 @@
 package org.munycha.kafkaproducer.producer;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.munycha.kafkaproducer.model.LogEvent;
 import org.munycha.kafkaproducer.utility.KafkaTopicValidator;
 
 import java.io.RandomAccessFile;
@@ -13,12 +15,15 @@ public class FileWatcher implements Runnable {
 
     private final Path filePath;
     private final String topic;
+    private final String logSourceHost;
     private final KafkaProducer<String, String> producer;
     private final Properties producerProps;
+    private final ObjectMapper mapper = new ObjectMapper();
 
-    public FileWatcher(Path filePath, String topic, KafkaProducer<String, String> producer, Properties producerProps) {
+    public FileWatcher(Path filePath, String topic,String logSourceHost, KafkaProducer<String, String> producer, Properties producerProps) {
         this.filePath = filePath;
         this.topic = topic;
+        this.logSourceHost = logSourceHost;
         this.producer = producer;
         this.producerProps = producerProps;
     }
@@ -41,7 +46,7 @@ public class FileWatcher implements Runnable {
 
         try (RandomAccessFile reader = new RandomAccessFile(filePath.toFile(), "r")) {
             long filePointer = reader.length();
-            System.out.printf("[%s] Watching file: %s -> Topic: %s%n", java.time.LocalTime.now(), filePath, topic);
+            System.out.printf("[%s] Watching file: %s -> Topic: %s%n", java.time.LocalDateTime.now(), filePath, topic);
 
             while (!Thread.currentThread().isInterrupted()) {
 
@@ -63,13 +68,17 @@ public class FileWatcher implements Runnable {
 
                         if (msg.isBlank()) continue;
 
-                        producer.send(new ProducerRecord<>(topic, msg), (metadata, ex) -> {
+                        LogEvent logEvent = new LogEvent(this.logSourceHost,this.filePath.toString(),this.topic,System.currentTimeMillis(),msg);
+
+                        String finalMessage = mapper.writeValueAsString(logEvent);
+
+                        producer.send(new ProducerRecord<>(topic, finalMessage), (metadata, ex) -> {
                             if (ex != null) {
                                 System.err.printf("[%s] Topic: %-15s Error: %s%n",
                                         java.time.LocalTime.now(), topic, ex.getMessage());
                             } else {
                                 System.out.printf("[%s] Topic: %-15s Sent message: %s%n",
-                                        java.time.LocalTime.now(), topic, msg);
+                                        java.time.LocalDateTime.now(), topic, msg);
                             }
                         });
                     }
@@ -85,11 +94,6 @@ public class FileWatcher implements Runnable {
 
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            try {
-                producer.flush();
-                producer.close();
-            } catch (Exception ignored) {}
         }
     }
 }

@@ -29,13 +29,15 @@ public class AppMain {
         // Create a thread pool — one worker thread per watched file
         ExecutorService executor = Executors.newFixedThreadPool(config.getFiles().size());
 
+        String logSourceHost = config.getLogSourceHost();
+
         for (FileItem f : config.getFiles()) {
             String path = f.getPath();
             String topic = f.getTopic();
             Path filePath = Paths.get(path);
             Properties producerProps = factory.getProducerProps();
 
-            executor.submit(new FileWatcher(filePath, topic, producer, producerProps));
+            executor.submit(new FileWatcher(filePath, topic,logSourceHost,producer, producerProps));
         }
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
