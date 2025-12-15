@@ -2,7 +2,6 @@ package org.munycha.kafkaconsumer.consumer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.clients.consumer.*;
-import org.apache.kafka.common.serialization.StringDeserializer;
 import org.munycha.kafkaconsumer.model.LogEvent;
 import org.munycha.kafkaconsumer.telegram.TelegramNotifier;
 import org.munycha.kafkaconsumer.db.AlertDatabase;
@@ -15,7 +14,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;

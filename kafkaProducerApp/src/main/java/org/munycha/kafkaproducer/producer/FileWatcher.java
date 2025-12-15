@@ -46,7 +46,7 @@ public class FileWatcher implements Runnable {
 
         try (RandomAccessFile reader = new RandomAccessFile(filePath.toFile(), "r")) {
             long filePointer = reader.length();
-            System.out.printf("[%s] Watching file: %s -> Topic: %s%n", java.time.LocalDateTime.now(), filePath, topic);
+            System.out.printf("Watching file: %s -> Topic: %s%n", filePath, topic);
 
             while (!Thread.currentThread().isInterrupted()) {
 
