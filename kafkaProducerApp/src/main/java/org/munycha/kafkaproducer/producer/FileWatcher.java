@@ -6,9 +6,10 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.munycha.kafkaproducer.model.LogEvent;
 import org.munycha.kafkaproducer.utility.KafkaTopicValidator;
 
+import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.*;
 import java.util.Properties;
 
 public class FileWatcher implements Runnable {
@@ -20,7 +21,16 @@ public class FileWatcher implements Runnable {
     private final Properties producerProps;
     private final ObjectMapper mapper = new ObjectMapper();
 
-    public FileWatcher(Path filePath, String topic,String logSourceHost, KafkaProducer<String, String> producer, Properties producerProps) {
+    private long filePointer = 0;
+    private final StringBuilder lineBuffer = new StringBuilder();
+
+    public FileWatcher(
+            Path filePath,
+            String topic,
+            String logSourceHost,
+            KafkaProducer<String, String> producer,
+            Properties producerProps
+    ) {
         this.filePath = filePath;
         this.topic = topic;
         this.logSourceHost = logSourceHost;
@@ -31,64 +41,86 @@ public class FileWatcher implements Runnable {
     @Override
     public void run() {
 
-        // Validate that the topic exists before starting
         if (!KafkaTopicValidator.topicExists(topic, producerProps)) {
-            System.err.println("[Kafka] Topic " + topic + " does NOT exist. Skipping watcher for this file.");
+            System.err.println("[Kafka] Topic does NOT exist: " + topic);
             return;
         }
 
-        // Validate that the target file exists
         if (!Files.exists(filePath)) {
-            System.err.println("Producer output file does NOT exist: " + filePath);
-            System.err.println("Please create it manually. Producer will NOT write.");
+            System.err.println("Log file does NOT exist: " + filePath);
             return;
         }
 
-        try (RandomAccessFile reader = new RandomAccessFile(filePath.toFile(), "r")) {
-            long filePointer = reader.length();
-            System.out.printf("Watching file: %s -> Topic: %s%n", filePath, topic);
+        Path directory = filePath.getParent();
+
+        try (
+                WatchService watchService = FileSystems.getDefault().newWatchService();
+                RandomAccessFile raf = new RandomAccessFile(filePath.toFile(), "r")
+        ) {
+
+            directory.register(
+                    watchService,
+                    StandardWatchEventKinds.ENTRY_MODIFY,
+                    StandardWatchEventKinds.ENTRY_DELETE,
+                    StandardWatchEventKinds.ENTRY_CREATE
+            );
+
+            filePointer = raf.length(); // tail behavior
+            System.out.printf("Watching file (WatchService): %s -> Topic: %s%n", filePath, topic);
 
             while (!Thread.currentThread().isInterrupted()) {
 
-                long fileLength = filePath.toFile().length();
-
-                if (fileLength < filePointer) {
-                    filePointer = fileLength;
-                    reader.seek(filePointer);
+                WatchKey key;
+                try {
+                    key = watchService.take(); // blocks
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
                 }
-                else if (fileLength > filePointer) {
-                    reader.seek(filePointer);
-                    String line;
 
-                    while ((line = reader.readLine()) != null) {
-                        String msg = line
-                                .replace("\uFEFF", "")  // Remove BOM if present
-                                .replace("\r", "")
-                                .trim();
+                for (WatchEvent<?> event : key.pollEvents()) {
 
-                        if (msg.isBlank()) continue;
+                    WatchEvent.Kind<?> kind = event.kind();
+                    Path changed = directory.resolve((Path) event.context());
 
-                        LogEvent logEvent = new LogEvent(this.logSourceHost,this.filePath.toString(),this.topic,System.currentTimeMillis(),msg);
-
-                        String finalMessage = mapper.writeValueAsString(logEvent);
-
-                        producer.send(new ProducerRecord<>(topic, finalMessage), (metadata, ex) -> {
-                            if (ex != null) {
-                                System.err.printf("[%s] Topic: %-15s Error: %s%n",
-                                        java.time.LocalTime.now(), topic, ex.getMessage());
-                            } else {
-                                System.out.printf("[%s] Topic: %-15s Sent message: %s%n",
-                                        java.time.LocalDateTime.now(), topic, msg);
-                            }
-                        });
+                    if (!changed.equals(filePath)) {
+                        continue;
                     }
 
-                    filePointer = reader.getFilePointer();
+                    // File deleted (rotation or manual delete)
+                    if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
+                        filePointer = 0;
+                        lineBuffer.setLength(0);
+                        continue;
+                    }
+
+                    // File created (rotation recreated)
+                    if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
+                        filePointer = 0;
+                        lineBuffer.setLength(0);
+                    }
+
+                    // File modified
+                    if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
+
+                        long length = raf.length();
+
+                        // Truncation or rotation
+                        if (length < filePointer) {
+                            filePointer = 0;
+                            lineBuffer.setLength(0);
+                        }
+
+                        if (length > filePointer) {
+                            raf.seek(filePointer);
+                            readNewBytes(raf);
+                            filePointer = raf.getFilePointer();
+                        }
+                    }
                 }
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException ie) {
-                    return;
+
+                if (!key.reset()) {
+                    break;
                 }
             }
 
@@ -96,4 +128,75 @@ public class FileWatcher implements Runnable {
             e.printStackTrace();
         }
     }
+
+    /**
+     * Reads bytes safely, decodes UTF-8, buffers partial lines.
+     */
+    private void readNewBytes(RandomAccessFile raf) throws IOException {
+
+        byte[] buffer = new byte[4096];
+        int read;
+
+        while ((read = raf.read(buffer)) > 0) {
+            String chunk = new String(buffer, 0, read, StandardCharsets.UTF_8);
+            lineBuffer.append(chunk);
+            flushCompleteLines();
+        }
+    }
+
+    /**
+     * Sends only complete lines to Kafka.
+     */
+    private void flushCompleteLines() {
+
+        int index;
+        while ((index = lineBuffer.indexOf("\n")) >= 0) {
+
+            String line = lineBuffer.substring(0, index);
+            lineBuffer.delete(0, index + 1);
+
+            String msg = line
+                    .replace("\uFEFF", "")
+                    .replace("\r", "")
+                    .trim();
+
+            if (msg.isBlank()) continue;
+
+            sendToKafka(msg);
+        }
+    }
+
+    private void sendToKafka(String msg) {
+        try {
+            LogEvent event = new LogEvent(
+                    logSourceHost,
+                    filePath.toString(),
+                    topic,
+                    System.currentTimeMillis(),
+                    msg
+            );
+
+            String payload = mapper.writeValueAsString(event);
+
+            producer.send(
+                    new ProducerRecord<>(topic, payload),
+                    (metadata, ex) -> {
+                        if (ex != null) {
+                            System.err.printf(
+                                    "[%s] Topic: %s Error: %s%n",
+                                    java.time.LocalTime.now(),
+                                    topic,
+                                    ex.getMessage()
+                            );
+                        }else{
+                            System.out.printf("[%s] Topic: %-15s Sent log: %s%n",java.time.LocalDateTime.now(), topic, msg);
+                        }
+                    }
+            );
+
+        } catch (Exception e) {
+            System.err.println("Failed to serialize/send log event: " + e.getMessage());
+        }
+    }
 }
+

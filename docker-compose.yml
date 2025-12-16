@@ -1,0 +1,12 @@
+services:
+  consumer:
+    build:
+      context: .
+      dockerfile: Dockerfile.consumer
+    image: kafka-consumer:1.0
+    container_name: kafka-consumer
+    restart: unless-stopped
+
+    volumes:
+      - ./release/config:/app/config
+      - /home/kafkaproducer/test_log_file:/home/kafkaproducer/test_log_file
