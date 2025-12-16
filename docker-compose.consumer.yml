@@ -8,5 +8,5 @@ services:
     restart: unless-stopped
 
     volumes:
-      - ${CONSUMER_CONFIG_DIR}:/app/config:ro
-      - ${CONSUMER_LOG_DIR}:/data/logs
+      - ./release/config:/app/config:ro
+      - ./runtime/consumer/logs:/data/logs
