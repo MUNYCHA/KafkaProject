@@ -5,13 +5,14 @@
   "telegramChatId": "YOUR_TELEGRAM_CHAT_ID",
 
   "topics": [
-    { "topic": "app1-topic", "output": "/path/to/logs/received_app1.log" },
-    { "topic": "app2-topic", "output": "/path/to/logs/received_app2.log" },
-    { "topic": "app3-topic", "output": "/path/to/logs/received_app3.log" },
-    { "topic": "app4-topic", "output": "/path/to/logs/received_app4.log" },
-    { "topic": "system-topic", "output": "/path/to/logs/received_system.log" },
-    { "topic": "server-topic", "output": "/path/to/logs/received_server.log" }
-  ],
+  { "topic": "app1-topic", "output": "/data/logs/received_app1.log" },
+  { "topic": "app2-topic", "output": "/data/logs/received_app2.log" },
+  { "topic": "app3-topic", "output": "/data/logs/received_app3.log" },
+  { "topic": "app4-topic", "output": "/data/logs/received_app4.log" },
+  { "topic": "system-topic", "output": "/data/logs/received_system.log" },
+  { "topic": "server-topic", "output": "/data/logs/received_server.log" }
+]
+,
 
   "alertKeywords": [
     "error",

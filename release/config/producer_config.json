@@ -2,11 +2,9 @@
   "bootstrapServers": "YOUR_KAFKA_BOOTSTRAP_SERVER",
   "logSourceHost" : "LOG_SOURCE",
   "files": [
-    { "path": "/home/kafkaproducer/test_log_file/app1.log", "topic": "app1-topic" },
-    { "path": "/home/kafkaproducer/test_log_file/app2.log", "topic": "app2-topic" },
-    { "path": "/home/kafkaproducer/test_log_file/app3.log", "topic": "app3-topic" },
-    { "path": "/home/kafkaproducer/test_log_file/app4.log", "topic": "app4-topic" },
-    { "path": "/home/kafkaproducer/test_log_file/system.log", "topic": "system-topic" },
-    { "path": "/home/kafkaproducer/test_log_file/server.log", "topic": "server-topic" }
-  ]
+  { "path": "/data/input/app1.log", "topic": "app1-topic" },
+  { "path": "/data/input/app2.log", "topic": "app2-topic" },
+  { "path": "/data/input/server.log", "topic": "server-topic" }
+]
+
 }

@@ -8,5 +8,5 @@ services:
     restart: unless-stopped
 
     volumes:
-      - ./release/config:/app/config
-      - /home/kafkaproducer/test_log_file:/home/kafkaproducer/test_log_file
+      - ${CONSUMER_CONFIG_DIR}:/app/config:ro
+      - ${CONSUMER_LOG_DIR}:/data/logs

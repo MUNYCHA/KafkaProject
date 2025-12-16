@@ -1,0 +1,12 @@
+services:
+  producer:
+    build:
+      context: .
+      dockerfile: Dockerfile.producer
+    image: kafka-producer:1.0
+    container_name: kafka-producer
+    restart: unless-stopped
+
+    volumes:
+      - ${PRODUCER_CONFIG_DIR}:/app/config:ro
+      - ${PRODUCER_INPUT_LOG_DIR}:/data/input:ro
