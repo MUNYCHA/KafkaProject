@@ -7,6 +7,10 @@ services:
     container_name: kafka-consumer
     restart: unless-stopped
 
+    environment:
+      - TZ=Asia/Phnom_Penh
+
     volumes:
       - ./release/config:/app/config:ro
       - ./runtime/consumer/logs:/data/logs
+
