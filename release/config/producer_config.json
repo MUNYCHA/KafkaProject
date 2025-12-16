@@ -2,7 +2,7 @@
   "bootstrapServers": "YOUR_KAFKA_BOOTSTRAP_SERVER",
   "logSourceHost" : "LOG_SOURCE",
   "files": [
-  { "path": "/data/input/logs/server.log", "topic": "server-topic" },
+  { "path": "/data/input/logs/server.log", "topic": "server-topic" }
 ]
 
 }
