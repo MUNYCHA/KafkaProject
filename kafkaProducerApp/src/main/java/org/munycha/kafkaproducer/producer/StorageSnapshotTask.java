@@ -7,9 +7,6 @@ import org.munycha.kafkaproducer.config.AppConfig;
 import org.munycha.kafkaproducer.config.ConfigLoader;
 import org.munycha.kafkaproducer.model.PathStorage;
 import org.munycha.kafkaproducer.model.SystemStorageSnapshot;
-
-
-import java.time.Instant;
 import java.util.List;
 
 public class StorageSnapshotTask implements Runnable {
@@ -31,7 +28,12 @@ public class StorageSnapshotTask implements Runnable {
             SystemStorageSnapshot snapshot = new SystemStorageSnapshot();
             snapshot.setServerName(config.getIdentity().getServerName());
             snapshot.setServerIp(config.getIdentity().getServerIp());
-            snapshot.setTimestamp(Instant.now());
+
+            String timestamp =
+                    java.time.format.DateTimeFormatter.ISO_INSTANT
+                            .format(java.time.Instant.ofEpochMilli(System.currentTimeMillis()));
+
+            snapshot.setTimestamp(timestamp);
             snapshot.setPathStorages(pathStorages);
 
             String json = mapper.writeValueAsString(snapshot);

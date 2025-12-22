@@ -6,13 +6,13 @@ import java.util.List;
 public class SystemStorageSnapshot {
     private String serverName;
     private String serverIp;
-    private Instant timestamp;
+    private String timestamp;
     private List<PathStorage> pathStorages;
 
     public SystemStorageSnapshot() {
     }
 
-    public SystemStorageSnapshot(String serverName, String serverIp, Instant timestamp, List<PathStorage> pathStorages) {
+    public SystemStorageSnapshot(String serverName, String serverIp, String timestamp, List<PathStorage> pathStorages) {
         this.serverName = serverName;
         this.serverIp = serverIp;
         this.timestamp = timestamp;
@@ -35,11 +35,11 @@ public class SystemStorageSnapshot {
         this.serverIp = serverIp;
     }
 
-    public Instant getTimestamp() {
+    public String getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(Instant timestamp) {
+    public void setTimestamp(String timestamp) {
         this.timestamp = timestamp;
     }
 
