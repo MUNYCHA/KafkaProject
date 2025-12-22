@@ -1,47 +1,80 @@
 package org.munycha.kafkaproducer;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
+import org.munycha.kafkaproducer.config.AppConfig;
 import org.munycha.kafkaproducer.config.ConfigLoader;
-import org.munycha.kafkaproducer.config.FileItem;
+import org.munycha.kafkaproducer.config.FileConfig;
 import org.munycha.kafkaproducer.producer.FileWatcher;
 import org.munycha.kafkaproducer.producer.KafkaProducerFactory;
+import org.munycha.kafkaproducer.producer.StorageSnapshotTask;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class AppMain {
 
     public static void main(String[] args) throws Exception {
 
-        // Load application configuration from JSON
-        ConfigLoader config = new ConfigLoader("config/producer_config.json");
+        // Load config ONCE
+        ConfigLoader loader = new ConfigLoader("config/producer_config.json");
+        AppConfig config = loader.load();
 
-        // Initialize a KafkaProducerFactory with the configured bootstrap servers
-        KafkaProducerFactory factory = new KafkaProducerFactory(config.getBootstrapServers());
-
-        // Create a single shared KafkaProducer instance (used by all FileWatcher threads)
+        // Kafka producer
+        KafkaProducerFactory factory =
+                new KafkaProducerFactory(config.getBootstrapServers());
         KafkaProducer<String, String> producer = factory.createProducer();
 
-        // Create a thread pool — one worker thread per watched file
-        ExecutorService executor = Executors.newFixedThreadPool(config.getFiles().size());
+        // File watcher threads
+        ExecutorService executor =
+                Executors.newFixedThreadPool(config.getFiles().size());
 
-        String logSourceHost = config.getLogSourceHost();
+        String logSource = config.getIdentity().getServerIp();
 
-        for (FileItem f : config.getFiles()) {
-            String path = f.getPath();
-            String topic = f.getTopic();
-            Path filePath = Paths.get(path);
+        for (FileConfig f : config.getFiles()) {
+            Path filePath = Paths.get(f.getPath());
             Properties producerProps = factory.getProducerProps();
 
-            executor.submit(new FileWatcher(filePath, topic,logSourceHost,producer, producerProps));
+            executor.submit(
+                    new FileWatcher(
+                            filePath,
+                            f.getTopic(),
+                            logSource,
+                            producer,
+                            producerProps
+                    )
+            );
         }
+
+        // Storage snapshot scheduler
+        ScheduledExecutorService storageScheduler = null;
+
+        if (config.getSystemResources() != null &&
+                config.getSystemResources().isEnabled()) {
+
+            storageScheduler = Executors.newSingleThreadScheduledExecutor();
+
+            storageScheduler.scheduleAtFixedRate(
+                    new StorageSnapshotTask(producer, config),
+                    0,
+                    config.getSystemResources().getIntervalHours(),
+                    TimeUnit.HOURS
+            );
+        }
+
+        ScheduledExecutorService finalStorageScheduler = storageScheduler;
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.out.println("Shutting down producer...");
+
+            if (finalStorageScheduler != null) {
+                finalStorageScheduler.shutdownNow();
+            }
+
             try { producer.flush(); } catch (Exception ignored) {}
             producer.close();
             executor.shutdownNow();

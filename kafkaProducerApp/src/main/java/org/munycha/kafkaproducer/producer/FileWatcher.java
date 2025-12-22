@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.munycha.kafkaproducer.model.LogEvent;
-import org.munycha.kafkaproducer.utility.KafkaTopicValidator;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -16,7 +15,7 @@ public class FileWatcher implements Runnable {
 
     private final Path filePath;
     private final String topic;
-    private final String logSourceHost;
+    private final String logSource;
     private final KafkaProducer<String, String> producer;
     private final Properties producerProps;
     private final ObjectMapper mapper = new ObjectMapper();
@@ -27,24 +26,19 @@ public class FileWatcher implements Runnable {
     public FileWatcher(
             Path filePath,
             String topic,
-            String logSourceHost,
+            String logSource,
             KafkaProducer<String, String> producer,
             Properties producerProps
     ) {
         this.filePath = filePath;
         this.topic = topic;
-        this.logSourceHost = logSourceHost;
+        this.logSource = logSource;
         this.producer = producer;
         this.producerProps = producerProps;
     }
 
     @Override
     public void run() {
-
-        if (!KafkaTopicValidator.topicExists(topic, producerProps)) {
-            System.err.println("[Kafka] Topic does NOT exist: " + topic);
-            return;
-        }
 
         if (!Files.exists(filePath)) {
             System.err.println("Log file does NOT exist: " + filePath);
@@ -169,7 +163,7 @@ public class FileWatcher implements Runnable {
     private void sendToKafka(String msg) {
         try {
             LogEvent event = new LogEvent(
-                    logSourceHost,
+                    logSource,
                     filePath.toString(),
                     topic,
                     System.currentTimeMillis(),

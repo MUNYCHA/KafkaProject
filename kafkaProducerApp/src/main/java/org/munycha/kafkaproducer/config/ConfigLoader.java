@@ -3,15 +3,16 @@ package org.munycha.kafkaproducer.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.*;
-import java.util.List;
 
 public class ConfigLoader {
 
-    private final String bootstrapServers;
-    private final String logSourceHost;
-    private final List<FileItem> files;
+    private final String filePath;
 
-    public ConfigLoader(String filePath) throws Exception {
+    public ConfigLoader(String filePath) {
+        this.filePath = filePath;
+    }
+
+    public AppConfig load() throws Exception {
 
         try (InputStream inputStream = loadConfigFile(filePath)) {
 
@@ -22,11 +23,7 @@ public class ConfigLoader {
             }
 
             ObjectMapper mapper = new ObjectMapper();
-            ConfigData data = mapper.readValue(inputStream, ConfigData.class);
-
-            this.bootstrapServers = data.getBootstrapServers();
-            this.logSourceHost = data.getLogSourceHost();
-            this.files = data.getFiles();
+            return mapper.readValue(inputStream, AppConfig.class);
         }
     }
 
@@ -45,17 +42,5 @@ public class ConfigLoader {
                 "[ConfigLoader] External config not found. Loading INTERNAL config: " + filePath
         );
         return getClass().getClassLoader().getResourceAsStream(filePath);
-    }
-
-    public String getBootstrapServers() {
-        return bootstrapServers;
-    }
-
-    public String getLogSourceHost() {
-        return logSourceHost;
-    }
-
-    public List<FileItem> getFiles() {
-        return files;
     }
 }

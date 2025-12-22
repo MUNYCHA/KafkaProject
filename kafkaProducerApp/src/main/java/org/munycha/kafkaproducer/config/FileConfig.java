@@ -1,13 +1,13 @@
 package org.munycha.kafkaproducer.config;
 
-public class FileItem {
+public class FileConfig {
 
     private String path;
     private String topic;
 
-    public FileItem() {}
+    public FileConfig() {}
 
-    public FileItem(String path, String topic) {
+    public FileConfig(String path, String topic) {
         this.path = path;
         this.topic = topic;
     }
