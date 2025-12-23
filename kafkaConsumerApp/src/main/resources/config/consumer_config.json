@@ -5,12 +5,41 @@
   "telegramChatId": "YOUR_TELEGRAM_CHAT_ID",
 
   "topics": [
-    { "topic": "app1-topic", "output": "/path/to/logs/received_app1.log" },
-    { "topic": "app2-topic", "output": "/path/to/logs/received_app2.log" },
-    { "topic": "app3-topic", "output": "/path/to/logs/received_app3.log" },
-    { "topic": "app4-topic", "output": "/path/to/logs/received_app4.log" },
-    { "topic": "system-topic", "output": "/path/to/logs/received_system.log" },
-    { "topic": "server-topic", "output": "/path/to/logs/received_server.log" }
+    {
+      "topic": "app1-topic",
+      "type": "LOG",
+      "output": "/path/to/logs/received_app1.log"
+    },
+    {
+      "topic": "app2-topic",
+      "type": "LOG",
+      "output": "/path/to/logs/received_app2.log"
+    },
+    {
+      "topic": "app3-topic",
+      "type": "LOG",
+      "output": "/path/to/logs/received_app3.log"
+    },
+    {
+      "topic": "app4-topic",
+      "type": "LOG",
+      "output": "/path/to/logs/received_app4.log"
+    },
+    {
+      "topic": "server-topic",
+      "type": "LOG",
+      "output": "/path/to/logs/received_server.log"
+    },
+    {
+      "topic": "system-topic",
+      "type": "LOG",
+      "output": "/path/to/logs/received_system.log"
+    },
+    {
+      "topic": "system-resources-daily",
+      "type": "METRIC",
+      "output": "/path/to/logs/received_system_resources_daily.json"
+    }
   ],
 
   "alertKeywords": [

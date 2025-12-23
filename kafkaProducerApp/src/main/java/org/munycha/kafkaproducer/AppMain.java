@@ -33,7 +33,6 @@ public class AppMain {
         ExecutorService executor =
                 Executors.newFixedThreadPool(config.getFiles().size());
 
-        String logSource = config.getIdentity().getServerIp();
 
         for (FileConfig f : config.getFiles()) {
             Path filePath = Paths.get(f.getPath());
@@ -43,7 +42,7 @@ public class AppMain {
                     new FileWatcher(
                             filePath,
                             f.getTopic(),
-                            logSource,
+                            config.getIdentity().getServerName(),
                             producer,
                             producerProps
                     )

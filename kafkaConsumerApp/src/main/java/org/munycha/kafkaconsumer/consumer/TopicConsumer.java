@@ -2,10 +2,12 @@ package org.munycha.kafkaconsumer.consumer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.clients.consumer.*;
+import org.munycha.kafkaconsumer.config.TopicType;
 import org.munycha.kafkaconsumer.model.LogEvent;
+import org.munycha.kafkaconsumer.model.PathStorage;
+import org.munycha.kafkaconsumer.model.SystemStorageSnapshot;
 import org.munycha.kafkaconsumer.telegram.TelegramNotifier;
 import org.munycha.kafkaconsumer.db.AlertDatabase;
-import org.munycha.kafkaconsumer.utility.KafkaTopicValidator;
 
 
 import java.io.FileWriter;
@@ -25,6 +27,7 @@ import java.util.concurrent.Executors;
 public class TopicConsumer implements Runnable {
 
     private final String topic;
+    private final TopicType type;
     private final Path outputFile;
     private final List<String> alertKeywords;
     private final AlertDatabase alertDatabase;
@@ -67,12 +70,14 @@ public class TopicConsumer implements Runnable {
 
     public TopicConsumer(String bootstrapServers,
                          String topic,
+                         TopicType type,
                          Path outputFile,
                          String botToken,
                          String chatId,
                          List<String> alertKeywords,
                          AlertDatabase alertDatabase) {
         this.topic = topic;
+        this.type = type;
         this.outputFile = outputFile;
         this.alertKeywords = alertKeywords;
         this.alertDatabase = alertDatabase;
@@ -92,30 +97,39 @@ public class TopicConsumer implements Runnable {
     }
 
 
-    private void ensureTopicExists() {
-        if (!KafkaTopicValidator.topicExists(topic, this.consumerFactory.getConsumerProps())) {
-            System.err.println("[Kafka] Topic does NOT exist: " + topic);
-            throw new RuntimeException("Kafka topic does not exist: " + topic);
-        }
-    }
-
 
     @Override
     public void run() {
 
-        ensureTopicExists();
         ensureOutputFileExists();
 
         try (FileWriter writer = new FileWriter(outputFile.toFile(), true)) {
             System.out.printf("Listening to %s → writing to %s%n", topic, outputFile);
 
             while (true) {
-                ConsumerRecords<String, String> records = this.consumer.poll(Duration.ofMillis(500));
+                ConsumerRecords<String, String> records =
+                        consumer.poll(Duration.ofMillis(500));
 
                 for (ConsumerRecord<String, String> record : records) {
-                    handleRecord(record, writer);
+
+                    switch (type) {
+
+                        case LOG:
+                            handleLogRecord(record, writer);
+                            break;
+
+                        case METRIC:
+                            handleMetricRecord(record, writer);
+                            break;
+
+                        default:
+                            throw new IllegalStateException(
+                                    "Unsupported TopicType: " + type
+                            );
+                    }
                 }
             }
+
 
         } catch (IOException e) {
             System.err.println("File error: " + e.getMessage());
@@ -124,7 +138,62 @@ public class TopicConsumer implements Runnable {
         }
     }
 
-    private void handleRecord(ConsumerRecord<String, String> record, FileWriter writer) throws IOException {
+    private void handleMetricRecord(
+            ConsumerRecord<String, String> record,
+            FileWriter writer
+    ) throws IOException {
+
+        SystemStorageSnapshot snapshot =
+                mapper.readValue(record.value(), SystemStorageSnapshot.class);
+
+        System.out.println("===== SYSTEM STORAGE METRIC RECEIVED =====");
+        System.out.println("Server   : " + snapshot.getServerName());
+        System.out.println("IP       : " + snapshot.getServerIp());
+        System.out.println("Timestamp: " + snapshot.getTimestamp());
+
+        for (PathStorage ps : snapshot.getPathStorages()) {
+            System.out.printf(
+                    "Path: %-12s | Used: %6.2f%% | Used: %d / %d bytes%n",
+                    ps.getPath(),
+                    ps.getUsedPercent(),
+                    ps.getUsedBytes(),
+                    ps.getTotalBytes()
+            );
+        }
+
+        System.out.println("=========================================");
+
+        if (Files.exists(outputFile)) {
+
+            StringBuilder sb = new StringBuilder();
+
+            sb.append("===== SYSTEM STORAGE METRIC RECEIVED =====\n");
+            sb.append("Server   : ").append(snapshot.getServerName()).append('\n');
+            sb.append("IP       : ").append(snapshot.getServerIp()).append('\n');
+            sb.append("Timestamp: ").append(snapshot.getTimestamp()).append('\n');
+
+            for (PathStorage ps : snapshot.getPathStorages()) {
+                sb.append(
+                        String.format(
+                                "Path: %-12s | Used: %6.2f%% | Used: %d / %d bytes%n",
+                                ps.getPath(),
+                                ps.getUsedPercent(),
+                                ps.getUsedBytes(),
+                                ps.getTotalBytes()
+                        )
+                );
+            }
+
+            sb.append("=========================================\n");
+
+            writer.write(sb.toString());
+            writer.flush();
+        }
+
+    }
+
+
+    private void handleLogRecord(ConsumerRecord<String, String> record, FileWriter writer) throws IOException {
 
         LogEvent event = mapper.readValue(record.value(), LogEvent.class);
 
@@ -145,7 +214,7 @@ public class TopicConsumer implements Runnable {
 
         if (Files.exists(outputFile)) {
             writer.write(
-                    formattedTime + " [" + event.getLogSourceHost() + "] " +
+                    formattedTime + " [" + event.getServerName() + "] " +
                             msg + System.lineSeparator()
             );
             writer.flush();
@@ -169,7 +238,7 @@ public class TopicConsumer implements Runnable {
         String alertMessage =
                 "ALERT\n" +
                         " Time: " + formattedTime + "\n" +
-                        " Host: " + event.getLogSourceHost() + "\n" +
+                        " Host: " + event.getServerName() + "\n" +
                         " File: " + event.getPath() + "\n" +
                         " Topic: " + event.getTopic() + "\n" +
                         " Message: " + event.getMessage();
@@ -180,7 +249,7 @@ public class TopicConsumer implements Runnable {
                 alertDatabase.saveAlert(
                         event.getTopic(),
                         event.getTimestamp(),
-                        event.getLogSourceHost(),
+                        event.getServerName(),
                         event.getPath(),
                         event.getMessage()
                 )

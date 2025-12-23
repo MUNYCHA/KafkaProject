@@ -1,0 +1,53 @@
+package org.munycha.kafkaconsumer.model;
+
+import java.util.List;
+
+public class SystemStorageSnapshot {
+    private String serverName;
+    private String serverIp;
+    private String timestamp;
+    private List<PathStorage> pathStorages;
+
+    public SystemStorageSnapshot() {
+    }
+
+    public SystemStorageSnapshot(String serverName, String serverIp, String timestamp, List<PathStorage> pathStorages) {
+        this.serverName = serverName;
+        this.serverIp = serverIp;
+        this.timestamp = timestamp;
+        this.pathStorages = pathStorages;
+    }
+
+    public String getServerName() {
+        return serverName;
+    }
+
+    public void setServerName(String serverName) {
+        this.serverName = serverName;
+    }
+
+    public String getServerIp() {
+        return serverIp;
+    }
+
+    public void setServerIp(String serverIp) {
+        this.serverIp = serverIp;
+    }
+
+    public String getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(String timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public List<PathStorage> getPathStorages() {
+        return pathStorages;
+    }
+
+    public void setPathStorages(List<PathStorage> pathStorages) {
+        this.pathStorages = pathStorages;
+    }
+}
+

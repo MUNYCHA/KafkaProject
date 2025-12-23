@@ -1,5 +1,6 @@
 package org.munycha.kafkaconsumer;
 
+import org.munycha.kafkaconsumer.config.AppConfig;
 import org.munycha.kafkaconsumer.config.ConfigLoader;
 import org.munycha.kafkaconsumer.config.TopicConfig;
 import org.munycha.kafkaconsumer.consumer.TopicConsumer;
@@ -14,7 +15,8 @@ public class AppMain {
     public static void main(String[] args) throws Exception {
 
         // Load application configuration from JSON file
-        ConfigLoader config = new ConfigLoader("config/consumer_config.json");
+        ConfigLoader loader = new ConfigLoader("config/consumer_config.json");
+        AppConfig config = loader.load();
 
         // Initialize alert database
         AlertDatabase alertDatabase = new AlertDatabase(config.getDatabase());
@@ -27,6 +29,7 @@ public class AppMain {
             executor.submit(new TopicConsumer(
                     config.getBootstrapServers(),
                     t.getTopic(),
+                    t.getType(),
                     Path.of(t.getOutput()),
                     config.getTelegramBotToken(),
                     config.getTelegramChatId(),

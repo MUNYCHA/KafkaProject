@@ -2,7 +2,7 @@ package org.munycha.kafkaconsumer.config;
 
 import java.util.List;
 
-public class ConfigData {
+public class AppConfig {
 
     private String bootstrapServers;
     private String telegramBotToken;
@@ -13,7 +13,7 @@ public class ConfigData {
 
     private DatabaseConfig database;
 
-    public ConfigData() {}
+    public AppConfig() {}
 
     public String getBootstrapServers() {
         return bootstrapServers;

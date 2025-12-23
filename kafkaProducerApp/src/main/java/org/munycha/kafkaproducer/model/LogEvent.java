@@ -2,7 +2,7 @@ package org.munycha.kafkaproducer.model;
 
 public class LogEvent {
 
-    private String logSource;
+    private String serverName;
     private String path;
     private String topic;
     private long timestamp;
@@ -11,26 +11,20 @@ public class LogEvent {
     public LogEvent() {
     }
 
-    public LogEvent(
-            String logSource,
-            String path,
-            String topic,
-            long timestamp,
-            String message
-    ) {
-        this.logSource = logSource;
+    public LogEvent(String serverName, String path, String topic, long timestamp, String message) {
+        this.serverName = serverName;
         this.path = path;
         this.topic = topic;
         this.timestamp = timestamp;
         this.message = message;
     }
 
-    public String getLogSource() {
-        return logSource;
+    public String getServerName() {
+        return serverName;
     }
 
-    public void setLogSource(String logSource) {
-        this.logSource = logSource;
+    public void setServerName(String serverName) {
+        this.serverName = serverName;
     }
 
     public String getPath() {

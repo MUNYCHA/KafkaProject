@@ -15,7 +15,7 @@ public class FileWatcher implements Runnable {
 
     private final Path filePath;
     private final String topic;
-    private final String logSource;
+    private final String serverName;
     private final KafkaProducer<String, String> producer;
     private final Properties producerProps;
     private final ObjectMapper mapper = new ObjectMapper();
@@ -26,13 +26,13 @@ public class FileWatcher implements Runnable {
     public FileWatcher(
             Path filePath,
             String topic,
-            String logSource,
+            String serverName,
             KafkaProducer<String, String> producer,
             Properties producerProps
     ) {
         this.filePath = filePath;
         this.topic = topic;
-        this.logSource = logSource;
+        this.serverName = serverName;
         this.producer = producer;
         this.producerProps = producerProps;
     }
@@ -163,7 +163,7 @@ public class FileWatcher implements Runnable {
     private void sendToKafka(String msg) {
         try {
             LogEvent event = new LogEvent(
-                    logSource,
+                    serverName,
                     filePath.toString(),
                     topic,
                     System.currentTimeMillis(),
@@ -173,7 +173,7 @@ public class FileWatcher implements Runnable {
             String payload = mapper.writeValueAsString(event);
 
             producer.send(
-                    new ProducerRecord<>(topic, payload),
+                    new ProducerRecord<>(this.topic,this.serverName, payload),
                     (metadata, ex) -> {
                         if (ex != null) {
                             System.err.printf(
