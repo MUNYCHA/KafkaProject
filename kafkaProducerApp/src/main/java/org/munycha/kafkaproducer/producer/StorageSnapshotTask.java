@@ -38,11 +38,32 @@ public class StorageSnapshotTask implements Runnable {
 
             String json = mapper.writeValueAsString(snapshot);
 
-            producer.send(new ProducerRecord<>(
-                    config.getSystemResources().getTopic(),
-                    snapshot.getServerName(),
-                    json
-            ));
+            ProducerRecord<String, String> record =
+                    new ProducerRecord<>(
+                            config.getSystemResources().getTopic(),
+                            snapshot.getServerName(),
+                            json
+                    );
+
+            producer.send(record, (metadata, exception) -> {
+                if (exception == null) {
+                    System.out.println(
+                            "SYSTEM STORAGE SNAPSHOT SENT | "
+                                    + "server=" + snapshot.getServerName()
+                                    + " | topic=" + metadata.topic()
+                                    + " | partition=" + metadata.partition()
+                                    + " | offset=" + metadata.offset()
+                    );
+                } else {
+                    System.err.println(
+                            "FAILED TO SEND SYSTEM STORAGE SNAPSHOT | "
+                                    + "server=" + snapshot.getServerName()
+                                    + " | topic=" + record.topic()
+                    );
+                    exception.printStackTrace();
+                }
+            });
+
 
             producer.flush();
 
