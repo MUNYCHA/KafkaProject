@@ -1,6 +1,7 @@
 package org.munycha.kafkaconsumer.consumer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import org.apache.kafka.clients.consumer.*;
 import org.munycha.kafkaconsumer.config.TopicType;
 import org.munycha.kafkaconsumer.model.LogEvent;
@@ -165,30 +166,19 @@ public class TopicConsumer implements Runnable {
 
         if (Files.exists(outputFile)) {
 
-            StringBuilder sb = new StringBuilder();
+            ObjectWriter prettyWriter =
+                    mapper.writerWithDefaultPrettyPrinter();
 
-            sb.append("===== SYSTEM STORAGE METRIC RECEIVED =====\n");
-            sb.append("Server   : ").append(snapshot.getServerName()).append('\n');
-            sb.append("IP       : ").append(snapshot.getServerIp()).append('\n');
-            sb.append("Timestamp: ").append(snapshot.getTimestamp()).append('\n');
+            String prettyJson =
+                    prettyWriter.writeValueAsString(
+                            mapper.readTree(record.value())
+                    );
 
-            for (PathStorage ps : snapshot.getPathStorages()) {
-                sb.append(
-                        String.format(
-                                "Path: %-12s | Used: %6.2f%% | Used: %d / %d bytes%n",
-                                ps.getPath(),
-                                ps.getUsedPercent(),
-                                ps.getUsedBytes(),
-                                ps.getTotalBytes()
-                        )
-                );
-            }
-
-            sb.append("=========================================\n");
-
-            writer.write(sb.toString());
+            writer.write(prettyJson);
+            writer.write(System.lineSeparator());
             writer.flush();
         }
+
 
     }
 
