@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import org.apache.kafka.clients.consumer.*;
 import org.munycha.kafkaconsumer.config.TopicType;
+import org.munycha.kafkaconsumer.db.PathStorageDatabase;
+import org.munycha.kafkaconsumer.db.SystemStorageSnapshotDatabase;
 import org.munycha.kafkaconsumer.model.LogEvent;
 import org.munycha.kafkaconsumer.model.PathStorage;
 import org.munycha.kafkaconsumer.model.SystemStorageSnapshot;
@@ -32,13 +34,15 @@ public class TopicConsumer implements Runnable {
     private final Path outputFile;
     private final List<String> alertKeywords;
     private final AlertDatabase alertDatabase;
+    private final SystemStorageSnapshotDatabase systemStorageSnapshotDatabase;
+    private final PathStorageDatabase pathStorageDatabase;
     private final KafkaConsumer<String, String> consumer;
     private final TelegramNotifier notifier;
     private final KafkaConsumerFactory consumerFactory;
     private final ObjectMapper mapper = new ObjectMapper();
 
     //Create a single thread executor for Telegram alerts
-    private static final ExecutorService alertExecutor = Executors.newSingleThreadExecutor();
+    private static final ExecutorService telegramAlertExecutor = Executors.newSingleThreadExecutor();
 
     // Create a thread pool for database saving
     private static final ExecutorService dbExecutor = Executors.newFixedThreadPool(3);
@@ -49,18 +53,18 @@ public class TopicConsumer implements Runnable {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.out.println("Shutting down executors...");
 
-            alertExecutor.shutdown();
+            telegramAlertExecutor.shutdown();
             dbExecutor.shutdown();
 
             try {
-                if (!alertExecutor.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS)) {
-                    alertExecutor.shutdownNow();
+                if (!telegramAlertExecutor.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS)) {
+                    telegramAlertExecutor.shutdownNow();
                 }
                 if (!dbExecutor.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS)) {
                     dbExecutor.shutdownNow();
                 }
             } catch (InterruptedException e) {
-                alertExecutor.shutdownNow();
+                telegramAlertExecutor.shutdownNow();
                 dbExecutor.shutdownNow();
             }
 
@@ -76,12 +80,16 @@ public class TopicConsumer implements Runnable {
                          String botToken,
                          String chatId,
                          List<String> alertKeywords,
-                         AlertDatabase alertDatabase) {
+                         AlertDatabase alertDatabase,
+                         SystemStorageSnapshotDatabase systemStorageSnapshotDatabase,
+                         PathStorageDatabase pathStorageDatabase) {
         this.topic = topic;
         this.type = type;
         this.outputFile = outputFile;
         this.alertKeywords = alertKeywords;
         this.alertDatabase = alertDatabase;
+        this.systemStorageSnapshotDatabase = systemStorageSnapshotDatabase;
+        this.pathStorageDatabase = pathStorageDatabase;
 
         this.consumerFactory = new KafkaConsumerFactory(bootstrapServers, topic);
         this.consumer = this.consumerFactory.createConsumer();
@@ -161,26 +169,35 @@ public class TopicConsumer implements Runnable {
                     ps.getTotalBytes()
             );
         }
-
         System.out.println("=========================================");
 
-        if (Files.exists(outputFile)) {
 
+        if (Files.exists(outputFile)) {
             ObjectWriter prettyWriter =
                     mapper.writerWithDefaultPrettyPrinter();
 
-            String prettyJson =
-                    prettyWriter.writeValueAsString(
-                            mapper.readTree(record.value())
-                    );
-
-            writer.write(prettyJson);
+            writer.write(prettyWriter.writeValueAsString(snapshot));
             writer.write(System.lineSeparator());
             writer.flush();
         }
 
 
+        dbExecutor.submit(() -> {
+            try {
+                long snapshotId =
+                        systemStorageSnapshotDatabase.saveSnapshot(snapshot);
+
+                for (PathStorage ps : snapshot.getPathStorages()) {
+                    pathStorageDatabase.savePath(snapshotId, ps);
+                }
+
+            } catch (Exception e) {
+                System.err.println("[METRIC][DB] Failed to save storage metrics");
+                e.printStackTrace();
+            }
+        });
     }
+
 
 
     private void handleLogRecord(ConsumerRecord<String, String> record, FileWriter writer) throws IOException {
@@ -233,7 +250,7 @@ public class TopicConsumer implements Runnable {
                         " Topic: " + event.getTopic() + "\n" +
                         " Message: " + event.getMessage();
 
-        alertExecutor.submit(() -> notifier.sendMessage(alertMessage));
+        telegramAlertExecutor.submit(() -> notifier.sendMessage(alertMessage));
 
         dbExecutor.submit(() ->
                 alertDatabase.saveAlert(

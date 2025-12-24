@@ -17,7 +17,7 @@ public class AlertDatabase {
         this.url = dbConfig.getUrl();
         this.user = dbConfig.getUser();
         this.password = dbConfig.getPassword();
-        this.table = dbConfig.getTable();
+        this.table = dbConfig.getTables().getAlertLogTable();
     }
 
     private Connection getConnection() throws Exception {
