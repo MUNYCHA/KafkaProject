@@ -1,6 +1,7 @@
 package org.munycha.kafkaconsumer.db;
 
 import org.munycha.kafkaconsumer.config.DatabaseConfig;
+import org.xml.sax.helpers.AttributesImpl;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -26,22 +27,22 @@ public class AlertDatabase {
 
     public void saveAlert(
             String topic,
-            long eventTimestamp,
-            String logSourceHost,
+            String timestamp,
+            String serverName,
             String filePath,
             String message
     ) {
         String sql =
                 "INSERT INTO " + table +
-                        " (topic, event_timestamp, log_source_host, file_path, message) " +
+                        " (topic, server_name, file_path, event_timestamp, message) " +
                         "VALUES (?, ?, ?, ?, ?)";
 
         try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, topic);
-            stmt.setLong(2, eventTimestamp);
-            stmt.setString(3, logSourceHost);
+            stmt.setString(2, timestamp);
+            stmt.setString(3, serverName);
             stmt.setString(4, filePath);
             stmt.setString(5, message);
 

@@ -5,13 +5,13 @@ public class LogEvent {
     private String serverName;
     private String path;
     private String topic;
-    private long timestamp;
+    private String timestamp;
     private String message;
 
     public LogEvent() {
     }
 
-    public LogEvent(String serverName, String path, String topic, long timestamp, String message) {
+    public LogEvent(String serverName, String path, String topic, String timestamp, String message) {
         this.serverName = serverName;
         this.path = path;
         this.topic = topic;
@@ -43,11 +43,11 @@ public class LogEvent {
         this.topic = topic;
     }
 
-    public long getTimestamp() {
+    public String getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(long timestamp) {
+    public void setTimestamp(String timestamp) {
         this.timestamp = timestamp;
     }
 

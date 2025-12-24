@@ -208,9 +208,10 @@ public class TopicConsumer implements Runnable {
         String lowerMsg = msg.toLowerCase();
 
         String formattedTime =
-                Instant.ofEpochMilli(event.getTimestamp())
+                Instant.parse(event.getTimestamp())
                         .atZone(ZoneId.systemDefault())
                         .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+
 
         System.out.printf(
                 "[%s] (%s) %s%n",
@@ -238,9 +239,10 @@ public class TopicConsumer implements Runnable {
     private void processAlert(LogEvent event) {
 
         String formattedTime =
-                Instant.ofEpochMilli(event.getTimestamp())
+                Instant.parse(event.getTimestamp())
                         .atZone(ZoneId.systemDefault())
                         .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+
 
         String alertMessage =
                 "ALERT\n" +
