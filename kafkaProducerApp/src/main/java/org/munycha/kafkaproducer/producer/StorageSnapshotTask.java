@@ -7,6 +7,9 @@ import org.munycha.kafkaproducer.config.AppConfig;
 import org.munycha.kafkaproducer.config.ConfigLoader;
 import org.munycha.kafkaproducer.model.PathStorage;
 import org.munycha.kafkaproducer.model.SystemStorageSnapshot;
+
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class StorageSnapshotTask implements Runnable {
@@ -29,9 +32,7 @@ public class StorageSnapshotTask implements Runnable {
             snapshot.setServerName(config.getIdentity().getServerName());
             snapshot.setServerIp(config.getIdentity().getServerIp());
 
-            String timestamp =
-                    java.time.format.DateTimeFormatter.ISO_INSTANT
-                            .format(java.time.Instant.ofEpochMilli(System.currentTimeMillis()));
+            String timestamp = DateTimeFormatter.ISO_INSTANT.format(Instant.now());
 
             snapshot.setTimestamp(timestamp);
             snapshot.setPathStorages(pathStorages);

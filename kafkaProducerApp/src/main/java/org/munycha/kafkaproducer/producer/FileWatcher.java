@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.Properties;
 
 public class FileWatcher implements Runnable {
@@ -166,7 +168,7 @@ public class FileWatcher implements Runnable {
                     serverName,
                     filePath.toString(),
                     topic,
-                    System.currentTimeMillis(),
+                    DateTimeFormatter.ISO_INSTANT.format(Instant.now()),
                     msg
             );
 

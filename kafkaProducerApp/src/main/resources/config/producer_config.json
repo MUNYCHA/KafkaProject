@@ -17,7 +17,7 @@
 
   "systemResources": {
     "enabled": true,
-    "topic": "system.resources.daily",
+    "topic": "system-resources-daily",
     "paths": ["/", "/home", "/var/log"],
     "intervalHours": 12
   }
