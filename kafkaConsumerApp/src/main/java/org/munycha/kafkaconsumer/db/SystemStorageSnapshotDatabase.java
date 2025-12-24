@@ -4,6 +4,7 @@ import org.munycha.kafkaconsumer.config.DatabaseConfig;
 import org.munycha.kafkaconsumer.model.SystemStorageSnapshot;
 
 import java.sql.*;
+import java.time.Instant;
 
 public class SystemStorageSnapshotDatabase {
 
@@ -40,7 +41,7 @@ public class SystemStorageSnapshotDatabase {
             stmt.setTimestamp(
                     3,
                     Timestamp.from(
-                            java.time.Instant.parse(snapshot.getTimestamp())
+                            Instant.parse(snapshot.getTimestamp())
                     )
             );
 

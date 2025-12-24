@@ -6,6 +6,8 @@ import org.xml.sax.helpers.AttributesImpl;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 public class AlertDatabase {
@@ -39,11 +41,15 @@ public class AlertDatabase {
 
         try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-
             stmt.setString(1, topic);
-            stmt.setString(2, timestamp);
-            stmt.setString(3, serverName);
-            stmt.setString(4, filePath);
+            stmt.setString(2, serverName);
+            stmt.setString(3, filePath);
+
+            stmt.setTimestamp(
+                    4,
+                    Timestamp.from(Instant.parse(timestamp))
+            );
+
             stmt.setString(5, message);
 
             stmt.executeUpdate();
