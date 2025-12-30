@@ -28,6 +28,8 @@ public class ServerStorageUsageMonitor implements Runnable {
             List<ServerPathStorageUsage> serverPathStorageUsages = ServerPathStorageUsageCollector.collect(this.config.getStorageMonitoring().getPaths());
 
             ServerStorageUsage serverStorageUsage = new ServerStorageUsage();
+            serverStorageUsage.setSystemId(config.getIdentity().getSystem().getId());
+            serverStorageUsage.setSystemName(config.getIdentity().getSystem().getName());
             serverStorageUsage.setServerName(config.getIdentity().getServer().getName());
             serverStorageUsage.setServerIp(config.getIdentity().getServer().getIp());
 
