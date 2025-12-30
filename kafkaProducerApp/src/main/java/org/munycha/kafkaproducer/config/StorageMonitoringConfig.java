@@ -2,16 +2,16 @@ package org.munycha.kafkaproducer.config;
 
 import java.util.List;
 
-public class SystemResourceConfig {
+public class StorageMonitoringConfig {
     private boolean enabled;
     private String topic;
     private List<String> paths;
     private int intervalHours;
 
-    public SystemResourceConfig() {
+    public StorageMonitoringConfig() {
     }
 
-    public SystemResourceConfig(boolean enabled, String topic, List<String> paths, int intervalHours) {
+    public StorageMonitoringConfig(boolean enabled, String topic, List<String> paths, int intervalHours) {
         this.enabled = enabled;
         this.topic = topic;
         this.paths = paths;

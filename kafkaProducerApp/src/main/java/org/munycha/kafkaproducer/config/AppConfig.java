@@ -7,16 +7,16 @@ public class AppConfig {
     private String bootstrapServers;
     private IdentityConfig identity;
     private List<FileConfig> files;
-    private SystemResourceConfig systemResources;
+    private StorageMonitoringConfig storageMonitoring;
 
     public AppConfig() {
     }
 
-    public AppConfig(String bootstrapServers, IdentityConfig identity, List<FileConfig> files, SystemResourceConfig systemResources) {
+    public AppConfig(String bootstrapServers, IdentityConfig identity, List<FileConfig> files, StorageMonitoringConfig storageMonitoring) {
         this.bootstrapServers = bootstrapServers;
         this.identity = identity;
         this.files = files;
-        this.systemResources = systemResources;
+        this.storageMonitoring = storageMonitoring;
     }
 
     public String getBootstrapServers() {
@@ -43,11 +43,11 @@ public class AppConfig {
         this.files = files;
     }
 
-    public SystemResourceConfig getSystemResources() {
-        return systemResources;
+    public StorageMonitoringConfig getStorageMonitoring() {
+        return storageMonitoring;
     }
 
-    public void setSystemResources(SystemResourceConfig systemResources) {
-        this.systemResources = systemResources;
+    public void setStorageMonitoring(StorageMonitoringConfig storageMonitoring) {
+        this.storageMonitoring = storageMonitoring;
     }
 }

@@ -4,21 +4,20 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.munycha.kafkaproducer.config.AppConfig;
-import org.munycha.kafkaproducer.config.ConfigLoader;
-import org.munycha.kafkaproducer.model.PathStorage;
-import org.munycha.kafkaproducer.model.SystemStorageSnapshot;
+import org.munycha.kafkaproducer.model.ServerPathStorageUsage;
+import org.munycha.kafkaproducer.model.ServerStorageUsage;
 
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-public class StorageSnapshotTask implements Runnable {
+public class ServerStorageUsageMonitor implements Runnable {
     private final KafkaProducer<String, String> producer;
     private final AppConfig config;
 
     private final ObjectMapper mapper = new ObjectMapper();
 
-    public StorageSnapshotTask(KafkaProducer<String,String> producer,AppConfig config){
+    public ServerStorageUsageMonitor(KafkaProducer<String,String> producer, AppConfig config){
         this.producer = producer;
         this.config = config;
     }
@@ -26,23 +25,23 @@ public class StorageSnapshotTask implements Runnable {
     @Override
     public void run() {
         try {
-            List<PathStorage> pathStorages = StorageCollector.collect(this.config.getSystemResources().getPaths());
+            List<ServerPathStorageUsage> serverPathStorageUsages = ServerPathStorageUsageCollector.collect(this.config.getStorageMonitoring().getPaths());
 
-            SystemStorageSnapshot snapshot = new SystemStorageSnapshot();
-            snapshot.setServerName(config.getIdentity().getServerName());
-            snapshot.setServerIp(config.getIdentity().getServerIp());
+            ServerStorageUsage serverStorageUsage = new ServerStorageUsage();
+            serverStorageUsage.setServerName(config.getIdentity().getServer().getName());
+            serverStorageUsage.setServerIp(config.getIdentity().getServer().getIp());
 
             String timestamp = DateTimeFormatter.ISO_INSTANT.format(Instant.now());
 
-            snapshot.setTimestamp(timestamp);
-            snapshot.setPathStorages(pathStorages);
+            serverStorageUsage.setTimestamp(timestamp);
+            serverStorageUsage.setServerPathStorageUsages(serverPathStorageUsages);
 
-            String json = mapper.writeValueAsString(snapshot);
+            String json = mapper.writeValueAsString(serverStorageUsage);
 
             ProducerRecord<String, String> record =
                     new ProducerRecord<>(
-                            config.getSystemResources().getTopic(),
-                            snapshot.getServerName(),
+                            config.getStorageMonitoring().getTopic(),
+                            serverStorageUsage.getServerName(),
                             json
                     );
 
@@ -50,7 +49,7 @@ public class StorageSnapshotTask implements Runnable {
                 if (exception == null) {
                     System.out.println(
                             "SYSTEM STORAGE SNAPSHOT SENT | "
-                                    + "server=" + snapshot.getServerName()
+                                    + "server=" + serverStorageUsage.getServerName()
                                     + " | topic=" + metadata.topic()
                                     + " | partition=" + metadata.partition()
                                     + " | offset=" + metadata.offset()
@@ -58,7 +57,7 @@ public class StorageSnapshotTask implements Runnable {
                 } else {
                     System.err.println(
                             "FAILED TO SEND SYSTEM STORAGE SNAPSHOT | "
-                                    + "server=" + snapshot.getServerName()
+                                    + "server=" + serverStorageUsage.getServerName()
                                     + " | topic=" + record.topic()
                     );
                     exception.printStackTrace();

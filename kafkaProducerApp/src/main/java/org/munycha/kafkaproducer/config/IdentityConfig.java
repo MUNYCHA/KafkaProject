@@ -1,30 +1,30 @@
 package org.munycha.kafkaproducer.config;
 
 public class IdentityConfig {
-    private String serverName;
-    private String serverIp;
+    private SystemIdentity system;
+    private ServerIdentity server;
 
     public IdentityConfig() {
     }
 
-    public IdentityConfig(String serverName, String serverIp) {
-        this.serverName = serverName;
-        this.serverIp = serverIp;
+    public IdentityConfig(SystemIdentity system, ServerIdentity server) {
+        this.system = system;
+        this.server = server;
     }
 
-    public String getServerName() {
-        return serverName;
+    public SystemIdentity getSystem() {
+        return system;
     }
 
-    public void setServerName(String serverName) {
-        this.serverName = serverName;
+    public void setSystem(SystemIdentity system) {
+        this.system = system;
     }
 
-    public String getServerIp() {
-        return serverIp;
+    public ServerIdentity getServer() {
+        return server;
     }
 
-    public void setServerIp(String serverIp) {
-        this.serverIp = serverIp;
+    public void setServer(ServerIdentity server) {
+        this.server = server;
     }
 }

@@ -2,8 +2,14 @@
   "bootstrapServers": "192.168.60.135:9092",
 
   "identity": {
-    "serverName": "serverName",
-    "serverIp": "serverIp"
+    "system": {
+      "id": "system-A",
+      "name": "Payment Platform"
+    },
+    "server": {
+      "name": "linux-mint-vm",
+      "ip": "192.168.60.135"
+    }
   },
 
   "files": [
@@ -15,10 +21,11 @@
     { "path": "/home/kafkaproducer/test_log_file/server.log", "topic": "server-topic" }
   ],
 
-  "systemResources": {
+  "storageMonitoring": {
     "enabled": true,
-    "topic": "system-resources-daily",
+    "topic": "server-storage-usage",
     "paths": ["/", "/home", "/var/log"],
     "intervalHours": 12
   }
+
 }

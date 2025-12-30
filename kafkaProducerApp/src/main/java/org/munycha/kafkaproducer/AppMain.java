@@ -6,7 +6,7 @@ import org.munycha.kafkaproducer.config.ConfigLoader;
 import org.munycha.kafkaproducer.config.FileConfig;
 import org.munycha.kafkaproducer.producer.FileWatcher;
 import org.munycha.kafkaproducer.producer.KafkaProducerFactory;
-import org.munycha.kafkaproducer.producer.StorageSnapshotTask;
+import org.munycha.kafkaproducer.producer.ServerStorageUsageMonitor;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -42,7 +42,7 @@ public class AppMain {
                     new FileWatcher(
                             filePath,
                             f.getTopic(),
-                            config.getIdentity().getServerName(),
+                            config.getIdentity().getServer().getName(),
                             producer,
                             producerProps
                     )
@@ -52,15 +52,15 @@ public class AppMain {
         // Storage snapshot scheduler
         ScheduledExecutorService storageScheduler = null;
 
-        if (config.getSystemResources() != null &&
-                config.getSystemResources().isEnabled()) {
+        if (config.getStorageMonitoring() != null &&
+                config.getStorageMonitoring().isEnabled()) {
 
             storageScheduler = Executors.newSingleThreadScheduledExecutor();
 
             storageScheduler.scheduleAtFixedRate(
-                    new StorageSnapshotTask(producer, config),
+                    new ServerStorageUsageMonitor(producer, config),
                     0,
-                    config.getSystemResources().getIntervalHours(),
+                    config.getStorageMonitoring().getIntervalHours(),
                     TimeUnit.HOURS
             );
         }
