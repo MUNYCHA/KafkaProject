@@ -4,13 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import org.apache.kafka.clients.consumer.*;
 import org.munycha.kafkaconsumer.config.TopicType;
-import org.munycha.kafkaconsumer.db.PathStorageDatabase;
-import org.munycha.kafkaconsumer.db.SystemStorageSnapshotDatabase;
+import org.munycha.kafkaconsumer.db.ServerPathStorageUsageDB;
+import org.munycha.kafkaconsumer.db.ServerStorageUsageDB;
 import org.munycha.kafkaconsumer.model.LogEvent;
-import org.munycha.kafkaconsumer.model.PathStorage;
-import org.munycha.kafkaconsumer.model.SystemStorageSnapshot;
+import org.munycha.kafkaconsumer.model.ServerPathStorageUsage;
+import org.munycha.kafkaconsumer.model.ServerStorageUsage;
 import org.munycha.kafkaconsumer.telegram.TelegramNotifier;
-import org.munycha.kafkaconsumer.db.AlertDatabase;
+import org.munycha.kafkaconsumer.db.AlertDB;
 
 
 import java.io.FileWriter;
@@ -33,9 +33,9 @@ public class TopicConsumer implements Runnable {
     private final TopicType type;
     private final Path outputFile;
     private final List<String> alertKeywords;
-    private final AlertDatabase alertDatabase;
-    private final SystemStorageSnapshotDatabase systemStorageSnapshotDatabase;
-    private final PathStorageDatabase pathStorageDatabase;
+    private final AlertDB alertDB;
+    private final ServerStorageUsageDB serverStorageUsageDB;
+    private final ServerPathStorageUsageDB serverPathStorageUsageDB;
     private final KafkaConsumer<String, String> consumer;
     private final TelegramNotifier notifier;
     private final KafkaConsumerFactory consumerFactory;
@@ -80,16 +80,16 @@ public class TopicConsumer implements Runnable {
                          String botToken,
                          String chatId,
                          List<String> alertKeywords,
-                         AlertDatabase alertDatabase,
-                         SystemStorageSnapshotDatabase systemStorageSnapshotDatabase,
-                         PathStorageDatabase pathStorageDatabase) {
+                         AlertDB alertDB,
+                         ServerStorageUsageDB serverStorageUsageDB,
+                         ServerPathStorageUsageDB serverPathStorageUsageDB) {
         this.topic = topic;
         this.type = type;
         this.outputFile = outputFile;
         this.alertKeywords = alertKeywords;
-        this.alertDatabase = alertDatabase;
-        this.systemStorageSnapshotDatabase = systemStorageSnapshotDatabase;
-        this.pathStorageDatabase = pathStorageDatabase;
+        this.alertDB = alertDB;
+        this.serverStorageUsageDB = serverStorageUsageDB;
+        this.serverPathStorageUsageDB = serverPathStorageUsageDB;
 
         this.consumerFactory = new KafkaConsumerFactory(bootstrapServers, topic);
         this.consumer = this.consumerFactory.createConsumer();
@@ -152,21 +152,21 @@ public class TopicConsumer implements Runnable {
             FileWriter writer
     ) throws IOException {
 
-        SystemStorageSnapshot snapshot =
-                mapper.readValue(record.value(), SystemStorageSnapshot.class);
+        ServerStorageUsage serverStorageUsage =
+                mapper.readValue(record.value(), ServerStorageUsage.class);
 
         System.out.println("===== SYSTEM STORAGE METRIC RECEIVED =====");
-        System.out.println("Server   : " + snapshot.getServerName());
-        System.out.println("IP       : " + snapshot.getServerIp());
-        System.out.println("Timestamp: " + snapshot.getTimestamp());
+        System.out.println("Server   : " + serverStorageUsage.getServerName());
+        System.out.println("IP       : " + serverStorageUsage.getServerIp());
+        System.out.println("Timestamp: " + serverStorageUsage.getTimestamp());
 
-        for (PathStorage ps : snapshot.getPathStorages()) {
+        for (ServerPathStorageUsage spsu : serverStorageUsage.getServerPathStorageUsages()) {
             System.out.printf(
                     "Path: %-12s | Used: %6.2f%% | Used: %d / %d bytes%n",
-                    ps.getPath(),
-                    ps.getUsedPercent(),
-                    ps.getUsedBytes(),
-                    ps.getTotalBytes()
+                    spsu.getPath(),
+                    spsu.getUsedPercent(),
+                    spsu.getUsedBytes(),
+                    spsu.getTotalBytes()
             );
         }
         System.out.println("=========================================");
@@ -176,7 +176,7 @@ public class TopicConsumer implements Runnable {
             ObjectWriter prettyWriter =
                     mapper.writerWithDefaultPrettyPrinter();
 
-            writer.write(prettyWriter.writeValueAsString(snapshot));
+            writer.write(prettyWriter.writeValueAsString(serverStorageUsage));
             writer.write(System.lineSeparator());
             writer.flush();
         }
@@ -185,10 +185,10 @@ public class TopicConsumer implements Runnable {
         dbExecutor.submit(() -> {
             try {
                 long snapshotId =
-                        systemStorageSnapshotDatabase.saveSnapshot(snapshot);
+                        serverStorageUsageDB.saveSnapshot(serverStorageUsage);
 
-                for (PathStorage ps : snapshot.getPathStorages()) {
-                    pathStorageDatabase.savePath(snapshotId, ps);
+                for (ServerPathStorageUsage spsu : serverStorageUsage.getServerPathStorageUsages()) {
+                    serverPathStorageUsageDB.savePath(snapshotId, spsu);
                 }
 
             } catch (Exception e) {
@@ -255,7 +255,7 @@ public class TopicConsumer implements Runnable {
         telegramAlertExecutor.submit(() -> notifier.sendMessage(alertMessage));
 
         dbExecutor.submit(() ->
-                alertDatabase.saveAlert(
+                alertDB.saveAlert(
                         event.getTopic(),
                         event.getTimestamp(),
                         event.getServerName(),

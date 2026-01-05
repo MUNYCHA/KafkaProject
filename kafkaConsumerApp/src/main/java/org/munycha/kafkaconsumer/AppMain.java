@@ -4,9 +4,9 @@ import org.munycha.kafkaconsumer.config.AppConfig;
 import org.munycha.kafkaconsumer.config.ConfigLoader;
 import org.munycha.kafkaconsumer.config.TopicConfig;
 import org.munycha.kafkaconsumer.consumer.TopicConsumer;
-import org.munycha.kafkaconsumer.db.AlertDatabase;
-import org.munycha.kafkaconsumer.db.PathStorageDatabase;
-import org.munycha.kafkaconsumer.db.SystemStorageSnapshotDatabase;
+import org.munycha.kafkaconsumer.db.AlertDB;
+import org.munycha.kafkaconsumer.db.ServerPathStorageUsageDB;
+import org.munycha.kafkaconsumer.db.ServerStorageUsageDB;
 
 import java.nio.file.Path;
 import java.util.concurrent.ExecutorService;
@@ -21,13 +21,13 @@ public class AppMain {
         AppConfig config = loader.load();
 
         // Initialize alert database
-        AlertDatabase alertDatabase = new AlertDatabase(config.getDatabase());
+        AlertDB alertDatabase = new AlertDB(config.getDatabase());
 
         //Initialize system storage snapshot database
-        SystemStorageSnapshotDatabase systemStorageSnapshotDatabase = new SystemStorageSnapshotDatabase(config.getDatabase());
+        ServerStorageUsageDB systemStorageSnapshotDatabase = new ServerStorageUsageDB(config.getDatabase());
 
         //Initialize path storage database
-        PathStorageDatabase pathStorageDatabase = new PathStorageDatabase(config.getDatabase());
+        ServerPathStorageUsageDB pathStorageDatabase = new ServerPathStorageUsageDB(config.getDatabase());
 
         // Create a thread pool — one consumer thread per topic
         ExecutorService executor = Executors.newFixedThreadPool(config.getTopics().size());

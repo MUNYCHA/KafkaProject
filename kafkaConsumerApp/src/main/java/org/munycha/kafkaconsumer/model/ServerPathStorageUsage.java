@@ -1,15 +1,15 @@
 package org.munycha.kafkaconsumer.model;
 
-public class PathStorage {
+public class ServerPathStorageUsage {
     private String path;
     private long totalBytes;
     private long usedBytes;
     private double usedPercent;
 
-    public PathStorage() {
+    public ServerPathStorageUsage() {
     }
 
-    public PathStorage(String path, long totalBytes, long usedBytes, double usedPercent) {
+    public ServerPathStorageUsage(String path, long totalBytes, long usedBytes, double usedPercent) {
         this.path = path;
         this.totalBytes = totalBytes;
         this.usedBytes = usedBytes;

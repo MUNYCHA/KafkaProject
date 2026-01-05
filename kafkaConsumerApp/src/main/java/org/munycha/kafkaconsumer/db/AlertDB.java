@@ -1,22 +1,20 @@
 package org.munycha.kafkaconsumer.db;
 
 import org.munycha.kafkaconsumer.config.DatabaseConfig;
-import org.xml.sax.helpers.AttributesImpl;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.time.LocalDateTime;
 
-public class AlertDatabase {
+public class AlertDB {
     private final String url;
     private final String user;
     private final String password;
     private final String table;
 
-    public AlertDatabase(DatabaseConfig dbConfig) {
+    public AlertDB(DatabaseConfig dbConfig) {
         this.url = dbConfig.getUrl();
         this.user = dbConfig.getUser();
         this.password = dbConfig.getPassword();

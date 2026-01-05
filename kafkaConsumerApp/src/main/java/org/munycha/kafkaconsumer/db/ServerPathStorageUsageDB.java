@@ -1,21 +1,21 @@
 package org.munycha.kafkaconsumer.db;
 
 import org.munycha.kafkaconsumer.config.DatabaseConfig;
-import org.munycha.kafkaconsumer.model.PathStorage;
+import org.munycha.kafkaconsumer.model.ServerPathStorageUsage;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-public class PathStorageDatabase {
+public class ServerPathStorageUsageDB {
 
     private final String url;
     private final String user;
     private final String password;
     private final String table;
 
-    public PathStorageDatabase(DatabaseConfig dbConfig) {
+    public ServerPathStorageUsageDB(DatabaseConfig dbConfig) {
         this.url = dbConfig.getUrl();
         this.user = dbConfig.getUser();
         this.password = dbConfig.getPassword();
@@ -26,7 +26,7 @@ public class PathStorageDatabase {
         return DriverManager.getConnection(url, user, password);
     }
 
-    public void savePath(long snapshotId, PathStorage ps) throws SQLException {
+    public void savePath(long snapshotId, ServerPathStorageUsage ps) throws SQLException {
 
         String sql =
                 "INSERT INTO " + table +
