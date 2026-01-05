@@ -38,11 +38,10 @@ public class ServerStorageUsageDB {
             stmt.setString(2, serverStorageUsage.getSystemName());
             stmt.setString(3, serverStorageUsage.getServerIp());
             stmt.setString(4, serverStorageUsage.getServerName());
-            stmt.setString(5,serverStorageUsage.getTimestamp());
 
             // Convert ISO timestamp string to SQL TIMESTAMP
             stmt.setTimestamp(
-                    3,
+                    5,
                     Timestamp.from(
                             Instant.parse(serverStorageUsage.getTimestamp())
                     )
