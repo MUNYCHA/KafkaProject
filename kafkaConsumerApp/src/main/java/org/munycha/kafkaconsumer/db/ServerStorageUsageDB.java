@@ -28,14 +28,17 @@ public class ServerStorageUsageDB {
 
         String sql =
                 "INSERT INTO " + table +
-                        " (server_name, server_ip, snapshot_time) VALUES (?, ?, ?)";
+                        " (system_id,system_name,server_ip, server_name, collected_at) VALUES (?, ?, ?, ?, ?)";
 
         try (Connection conn = getConnection();
              PreparedStatement stmt =
                      conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            stmt.setString(1, serverStorageUsage.getServerName());
-            stmt.setString(2, serverStorageUsage.getServerIp());
+            stmt.setString(1, serverStorageUsage.getSystemId());
+            stmt.setString(2, serverStorageUsage.getSystemName());
+            stmt.setString(3, serverStorageUsage.getServerIp());
+            stmt.setString(4, serverStorageUsage.getServerName());
+            stmt.setString(5,serverStorageUsage.getTimestamp());
 
             // Convert ISO timestamp string to SQL TIMESTAMP
             stmt.setTimestamp(

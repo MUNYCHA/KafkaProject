@@ -26,21 +26,21 @@ public class ServerPathStorageUsageDB {
         return DriverManager.getConnection(url, user, password);
     }
 
-    public void savePath(long snapshotId, ServerPathStorageUsage ps) throws SQLException {
+    public void savePath(long serverStorageUsageId, ServerPathStorageUsage serverPathStorageUsage) throws SQLException {
 
         String sql =
                 "INSERT INTO " + table +
-                        " (snapshot_id, path, total_bytes, used_bytes, used_percent) " +
+                        " (server_storage_usage_id, path, total_bytes, used_bytes, used_percent) " +
                         "VALUES (?, ?, ?, ?, ?)";
 
         try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setLong(1, snapshotId);
-            stmt.setString(2, ps.getPath());
-            stmt.setLong(3, ps.getTotalBytes());
-            stmt.setLong(4, ps.getUsedBytes());
-            stmt.setDouble(5, ps.getUsedPercent());
+            stmt.setLong(1, serverStorageUsageId);
+            stmt.setString(2, serverPathStorageUsage.getPath());
+            stmt.setLong(3, serverPathStorageUsage.getTotalBytes());
+            stmt.setLong(4, serverPathStorageUsage.getUsedBytes());
+            stmt.setDouble(5, serverPathStorageUsage.getUsedPercent());
 
             stmt.executeUpdate();
         }

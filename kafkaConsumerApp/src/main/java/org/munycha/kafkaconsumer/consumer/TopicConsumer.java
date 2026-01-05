@@ -184,11 +184,11 @@ public class TopicConsumer implements Runnable {
 
         dbExecutor.submit(() -> {
             try {
-                long snapshotId =
+                long serverStorageUsageId =
                         serverStorageUsageDB.saveSnapshot(serverStorageUsage);
 
                 for (ServerPathStorageUsage spsu : serverStorageUsage.getServerPathStorageUsages()) {
-                    serverPathStorageUsageDB.savePath(snapshotId, spsu);
+                    serverPathStorageUsageDB.savePath(serverStorageUsageId, spsu);
                 }
 
             } catch (Exception e) {
