@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.munycha.kafkaproducer.config.AppConfig;
-import org.munycha.kafkaproducer.model.ServerPathStorageUsage;
+import org.munycha.kafkaproducer.model.MountPathStorageUsage;
 import org.munycha.kafkaproducer.model.ServerStorageUsage;
 
 import java.time.Instant;
@@ -25,7 +25,7 @@ public class ServerStorageUsageMonitor implements Runnable {
     @Override
     public void run() {
         try {
-            List<ServerPathStorageUsage> serverPathStorageUsages = ServerPathStorageUsageCollector.collect(this.config.getStorageMonitoring().getPaths());
+            List<MountPathStorageUsage> mountPathStorageUsages = MountPathStorageUsageCollector.collect(this.config.getStorageMonitoring().getPaths());
 
             ServerStorageUsage serverStorageUsage = new ServerStorageUsage();
             serverStorageUsage.setSystemId(config.getIdentity().getSystem().getId());
@@ -36,7 +36,7 @@ public class ServerStorageUsageMonitor implements Runnable {
             String timestamp = DateTimeFormatter.ISO_INSTANT.format(Instant.now());
 
             serverStorageUsage.setTimestamp(timestamp);
-            serverStorageUsage.setServerPathStorageUsages(serverPathStorageUsages);
+            serverStorageUsage.setMountPathStorageUsages(mountPathStorageUsages);
 
             String json = mapper.writeValueAsString(serverStorageUsage);
 

@@ -4,10 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import org.apache.kafka.clients.consumer.*;
 import org.munycha.kafkaconsumer.config.TopicType;
-import org.munycha.kafkaconsumer.db.ServerPathStorageUsageDB;
+import org.munycha.kafkaconsumer.db.MountPathStorageUsageDB;
 import org.munycha.kafkaconsumer.db.ServerStorageUsageDB;
 import org.munycha.kafkaconsumer.model.LogEvent;
-import org.munycha.kafkaconsumer.model.ServerPathStorageUsage;
+import org.munycha.kafkaconsumer.model.MountPathStorageUsage;
 import org.munycha.kafkaconsumer.model.ServerStorageUsage;
 import org.munycha.kafkaconsumer.telegram.TelegramNotifier;
 import org.munycha.kafkaconsumer.db.AlertDB;
@@ -35,7 +35,7 @@ public class TopicConsumer implements Runnable {
     private final List<String> alertKeywords;
     private final AlertDB alertDB;
     private final ServerStorageUsageDB serverStorageUsageDB;
-    private final ServerPathStorageUsageDB serverPathStorageUsageDB;
+    private final MountPathStorageUsageDB mountPathStorageUsageDB;
     private final KafkaConsumer<String, String> consumer;
     private final TelegramNotifier notifier;
     private final KafkaConsumerFactory consumerFactory;
@@ -82,14 +82,14 @@ public class TopicConsumer implements Runnable {
                          List<String> alertKeywords,
                          AlertDB alertDB,
                          ServerStorageUsageDB serverStorageUsageDB,
-                         ServerPathStorageUsageDB serverPathStorageUsageDB) {
+                         MountPathStorageUsageDB mountPathStorageUsageDB) {
         this.topic = topic;
         this.type = type;
         this.outputFile = outputFile;
         this.alertKeywords = alertKeywords;
         this.alertDB = alertDB;
         this.serverStorageUsageDB = serverStorageUsageDB;
-        this.serverPathStorageUsageDB = serverPathStorageUsageDB;
+        this.mountPathStorageUsageDB = mountPathStorageUsageDB;
 
         this.consumerFactory = new KafkaConsumerFactory(bootstrapServers, topic);
         this.consumer = this.consumerFactory.createConsumer();
@@ -160,7 +160,7 @@ public class TopicConsumer implements Runnable {
         System.out.println("IP       : " + serverStorageUsage.getServerIp());
         System.out.println("Timestamp: " + serverStorageUsage.getTimestamp());
 
-        for (ServerPathStorageUsage spsu : serverStorageUsage.getServerPathStorageUsages()) {
+        for (MountPathStorageUsage spsu : serverStorageUsage.getMountPathStorageUsages()) {
             System.out.printf(
                     "Path: %-12s | Used: %6.2f%% | Used: %d / %d bytes%n",
                     spsu.getPath(),
@@ -187,8 +187,8 @@ public class TopicConsumer implements Runnable {
                 long serverStorageUsageId =
                         serverStorageUsageDB.saveSnapshot(serverStorageUsage);
 
-                for (ServerPathStorageUsage spsu : serverStorageUsage.getServerPathStorageUsages()) {
-                    serverPathStorageUsageDB.savePath(serverStorageUsageId, spsu);
+                for (MountPathStorageUsage spsu : serverStorageUsage.getMountPathStorageUsages()) {
+                    mountPathStorageUsageDB.savePath(serverStorageUsageId, spsu);
                 }
 
             } catch (Exception e) {

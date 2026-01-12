@@ -5,7 +5,7 @@ import org.munycha.kafkaconsumer.config.ConfigLoader;
 import org.munycha.kafkaconsumer.config.TopicConfig;
 import org.munycha.kafkaconsumer.consumer.TopicConsumer;
 import org.munycha.kafkaconsumer.db.AlertDB;
-import org.munycha.kafkaconsumer.db.ServerPathStorageUsageDB;
+import org.munycha.kafkaconsumer.db.MountPathStorageUsageDB;
 import org.munycha.kafkaconsumer.db.ServerStorageUsageDB;
 
 import java.nio.file.Path;
@@ -24,10 +24,10 @@ public class AppMain {
         AlertDB alertDatabase = new AlertDB(config.getDatabase());
 
         //Initialize system storage snapshot database
-        ServerStorageUsageDB systemStorageSnapshotDatabase = new ServerStorageUsageDB(config.getDatabase());
+        ServerStorageUsageDB serverStorageUsageDB = new ServerStorageUsageDB(config.getDatabase());
 
         //Initialize path storage database
-        ServerPathStorageUsageDB pathStorageDatabase = new ServerPathStorageUsageDB(config.getDatabase());
+        MountPathStorageUsageDB mountPathStorageUsageDB = new MountPathStorageUsageDB(config.getDatabase());
 
         // Create a thread pool — one consumer thread per topic
         ExecutorService executor = Executors.newFixedThreadPool(config.getTopics().size());
@@ -43,8 +43,8 @@ public class AppMain {
                     config.getTelegramChatId(),
                     config.getAlertKeywords(),
                     alertDatabase,
-                    systemStorageSnapshotDatabase,
-                    pathStorageDatabase
+                    serverStorageUsageDB,
+                    mountPathStorageUsageDB
             ));
         }
 

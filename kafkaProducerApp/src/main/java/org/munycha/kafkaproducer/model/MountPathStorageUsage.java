@@ -1,15 +1,15 @@
-package org.munycha.kafkaconsumer.model;
+package org.munycha.kafkaproducer.model;
 
-public class ServerPathStorageUsage {
+public class MountPathStorageUsage {
     private String path;
     private long totalBytes;
     private long usedBytes;
     private double usedPercent;
 
-    public ServerPathStorageUsage() {
+    public MountPathStorageUsage() {
     }
 
-    public ServerPathStorageUsage(String path, long totalBytes, long usedBytes, double usedPercent) {
+    public MountPathStorageUsage(String path, long totalBytes, long usedBytes, double usedPercent) {
         this.path = path;
         this.totalBytes = totalBytes;
         this.usedBytes = usedBytes;

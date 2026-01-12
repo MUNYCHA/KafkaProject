@@ -17,7 +17,7 @@ public class ServerStorageUsageDB {
         this.url = dbConfig.getUrl();
         this.user = dbConfig.getUser();
         this.password = dbConfig.getPassword();
-        this.table = dbConfig.getTables().getSystemStorageSnapshotTable();
+        this.table = dbConfig.getTables().getServerStorageUsageTable();
     }
 
     private Connection getConnection() throws SQLException {

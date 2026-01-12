@@ -1,15 +1,15 @@
 package org.munycha.kafkaproducer.producer;
 
-import org.munycha.kafkaproducer.model.ServerPathStorageUsage;
+import org.munycha.kafkaproducer.model.MountPathStorageUsage;
 
 import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ServerPathStorageUsageCollector {
+public class MountPathStorageUsageCollector {
 
-    public static List<ServerPathStorageUsage> collect(List<String> paths) {
-        List<ServerPathStorageUsage> result = new ArrayList<>();
+    public static List<MountPathStorageUsage> collect(List<String> paths) {
+        List<MountPathStorageUsage> result = new ArrayList<>();
 
         for (String p : paths) {
             try {
@@ -27,7 +27,7 @@ public class ServerPathStorageUsageCollector {
                         ? (double) used * 100.0 / total
                         : 0.0;
 
-                ServerPathStorageUsage ps = new ServerPathStorageUsage();
+                MountPathStorageUsage ps = new MountPathStorageUsage();
                 ps.setPath(p);
                 ps.setTotalBytes(total);
                 ps.setUsedBytes(used);
