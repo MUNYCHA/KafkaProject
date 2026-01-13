@@ -2,7 +2,7 @@ package org.munycha.kafkaconsumer.config;
 
 public class TableConfig {
     private String alertLogTable;
-    private String serverStorageUsageTable;
+    private String serverStorageSnapshotTable;
     private String mountPathStorageUsageTable;
 
     public TableConfig() {
@@ -16,12 +16,12 @@ public class TableConfig {
         this.alertLogTable = alertLogTable;
     }
 
-    public String getServerStorageUsageTable() {
-        return serverStorageUsageTable;
+    public String getServerStorageSnapshotTable() {
+        return serverStorageSnapshotTable;
     }
 
-    public void setServerStorageUsageTable(String serverStorageUsageTable) {
-        this.serverStorageUsageTable = serverStorageUsageTable;
+    public void setServerStorageSnapshotTable(String serverStorageSnapshotTable) {
+        this.serverStorageSnapshotTable = serverStorageSnapshotTable;
     }
 
     public String getMountPathStorageUsageTable() {

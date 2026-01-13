@@ -5,10 +5,10 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import org.apache.kafka.clients.consumer.*;
 import org.munycha.kafkaconsumer.config.TopicType;
 import org.munycha.kafkaconsumer.db.MountPathStorageUsageDB;
-import org.munycha.kafkaconsumer.db.ServerStorageUsageDB;
+import org.munycha.kafkaconsumer.db.ServerStorageSnapshotDB;
 import org.munycha.kafkaconsumer.model.LogEvent;
 import org.munycha.kafkaconsumer.model.MountPathStorageUsage;
-import org.munycha.kafkaconsumer.model.ServerStorageUsage;
+import org.munycha.kafkaconsumer.model.ServerStorageSnapshot;
 import org.munycha.kafkaconsumer.telegram.TelegramNotifier;
 import org.munycha.kafkaconsumer.db.AlertDB;
 
@@ -34,7 +34,7 @@ public class TopicConsumer implements Runnable {
     private final Path outputFile;
     private final List<String> alertKeywords;
     private final AlertDB alertDB;
-    private final ServerStorageUsageDB serverStorageUsageDB;
+    private final ServerStorageSnapshotDB serverStorageSnapshotDB;
     private final MountPathStorageUsageDB mountPathStorageUsageDB;
     private final KafkaConsumer<String, String> consumer;
     private final TelegramNotifier notifier;
@@ -81,14 +81,14 @@ public class TopicConsumer implements Runnable {
                          String chatId,
                          List<String> alertKeywords,
                          AlertDB alertDB,
-                         ServerStorageUsageDB serverStorageUsageDB,
+                         ServerStorageSnapshotDB serverStorageSnapshotDB,
                          MountPathStorageUsageDB mountPathStorageUsageDB) {
         this.topic = topic;
         this.type = type;
         this.outputFile = outputFile;
         this.alertKeywords = alertKeywords;
         this.alertDB = alertDB;
-        this.serverStorageUsageDB = serverStorageUsageDB;
+        this.serverStorageSnapshotDB = serverStorageSnapshotDB;
         this.mountPathStorageUsageDB = mountPathStorageUsageDB;
 
         this.consumerFactory = new KafkaConsumerFactory(bootstrapServers, topic);
@@ -152,15 +152,15 @@ public class TopicConsumer implements Runnable {
             FileWriter writer
     ) throws IOException {
 
-        ServerStorageUsage serverStorageUsage =
-                mapper.readValue(record.value(), ServerStorageUsage.class);
+        ServerStorageSnapshot serverStorageSnapshot =
+                mapper.readValue(record.value(), ServerStorageSnapshot.class);
 
         System.out.println("===== SYSTEM STORAGE METRIC RECEIVED =====");
-        System.out.println("Server   : " + serverStorageUsage.getServerName());
-        System.out.println("IP       : " + serverStorageUsage.getServerIp());
-        System.out.println("Timestamp: " + serverStorageUsage.getTimestamp());
+        System.out.println("Server   : " + serverStorageSnapshot.getServerName());
+        System.out.println("IP       : " + serverStorageSnapshot.getServerIp());
+        System.out.println("Timestamp: " + serverStorageSnapshot.getTimestamp());
 
-        for (MountPathStorageUsage spsu : serverStorageUsage.getMountPathStorageUsages()) {
+        for (MountPathStorageUsage spsu : serverStorageSnapshot.getMountPathStorageUsages()) {
             System.out.printf(
                     "Path: %-12s | Used: %6.2f%% | Used: %d / %d bytes%n",
                     spsu.getPath(),
@@ -176,7 +176,7 @@ public class TopicConsumer implements Runnable {
             ObjectWriter prettyWriter =
                     mapper.writerWithDefaultPrettyPrinter();
 
-            writer.write(prettyWriter.writeValueAsString(serverStorageUsage));
+            writer.write(prettyWriter.writeValueAsString(serverStorageSnapshot));
             writer.write(System.lineSeparator());
             writer.flush();
         }
@@ -185,9 +185,9 @@ public class TopicConsumer implements Runnable {
         dbExecutor.submit(() -> {
             try {
                 long serverStorageUsageId =
-                        serverStorageUsageDB.saveSnapshot(serverStorageUsage);
+                        serverStorageSnapshotDB.saveSnapshot(serverStorageSnapshot);
 
-                for (MountPathStorageUsage spsu : serverStorageUsage.getMountPathStorageUsages()) {
+                for (MountPathStorageUsage spsu : serverStorageSnapshot.getMountPathStorageUsages()) {
                     mountPathStorageUsageDB.savePath(serverStorageUsageId, spsu);
                 }
 

@@ -2,7 +2,7 @@ package org.munycha.kafkaconsumer.model;
 
 import java.util.List;
 
-public class ServerStorageUsage {
+public class ServerStorageSnapshot {
     private String systemId;
     private String systemName;
     private String serverName;
@@ -10,10 +10,10 @@ public class ServerStorageUsage {
     private String timestamp;
     private List<MountPathStorageUsage> mountPathStorageUsages;
 
-    public ServerStorageUsage() {
+    public ServerStorageSnapshot() {
     }
 
-    public ServerStorageUsage(String systemId, String systemName, String serverName, String serverIp, String timestamp, List<MountPathStorageUsage> mountPathStorageUsages) {
+    public ServerStorageSnapshot(String systemId, String systemName, String serverName, String serverIp, String timestamp, List<MountPathStorageUsage> mountPathStorageUsages) {
         this.systemId = systemId;
         this.systemName = systemName;
         this.serverName = serverName;

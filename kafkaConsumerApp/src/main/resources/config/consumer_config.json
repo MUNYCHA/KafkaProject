@@ -67,8 +67,8 @@
 
     "tables": {
       "alertLogTable": "alert_logs",
-      "serverStorageUsageTable": "server_storage_usage",
-      "mountPathStorageUsageTable": "server_path_storage_usage"
+      "serverStorageSnapshotTable": "server_storage_snapshot",
+      "mountPathStorageUsageTable": "mount_path_storage_usage"
     }
   }
 

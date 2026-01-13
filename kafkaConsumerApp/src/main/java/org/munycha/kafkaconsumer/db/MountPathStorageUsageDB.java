@@ -26,17 +26,17 @@ public class MountPathStorageUsageDB {
         return DriverManager.getConnection(url, user, password);
     }
 
-    public void savePath(long serverStorageUsageId, MountPathStorageUsage mountPathStorageUsage) throws SQLException {
+    public void savePath(long serverStorageSnapshotId, MountPathStorageUsage mountPathStorageUsage) throws SQLException {
 
         String sql =
                 "INSERT INTO " + table +
-                        " (server_storage_usage_id, path, total_bytes, used_bytes, used_percent) " +
+                        " (server_storage_snapshot_id, path, total_bytes, used_bytes, used_percent) " +
                         "VALUES (?, ?, ?, ?, ?)";
 
         try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setLong(1, serverStorageUsageId);
+            stmt.setLong(1, serverStorageSnapshotId);
             stmt.setString(2, mountPathStorageUsage.getPath());
             stmt.setLong(3, mountPathStorageUsage.getTotalBytes());
             stmt.setLong(4, mountPathStorageUsage.getUsedBytes());

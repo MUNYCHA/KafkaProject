@@ -6,7 +6,7 @@ import org.munycha.kafkaproducer.config.ConfigLoader;
 import org.munycha.kafkaproducer.config.FileConfig;
 import org.munycha.kafkaproducer.producer.FileWatcher;
 import org.munycha.kafkaproducer.producer.KafkaProducerFactory;
-import org.munycha.kafkaproducer.producer.ServerStorageUsageMonitor;
+import org.munycha.kafkaproducer.producer.ServerStorageMonitor;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -58,7 +58,7 @@ public class AppMain {
             storageScheduler = Executors.newSingleThreadScheduledExecutor();
 
             storageScheduler.scheduleAtFixedRate(
-                    new ServerStorageUsageMonitor(producer, config),
+                    new ServerStorageMonitor(producer, config),
                     0,
                     config.getStorageMonitoring().getIntervalHours(),
                     TimeUnit.HOURS

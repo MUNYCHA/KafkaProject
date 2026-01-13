@@ -6,7 +6,7 @@ import org.munycha.kafkaconsumer.config.TopicConfig;
 import org.munycha.kafkaconsumer.consumer.TopicConsumer;
 import org.munycha.kafkaconsumer.db.AlertDB;
 import org.munycha.kafkaconsumer.db.MountPathStorageUsageDB;
-import org.munycha.kafkaconsumer.db.ServerStorageUsageDB;
+import org.munycha.kafkaconsumer.db.ServerStorageSnapshotDB;
 
 import java.nio.file.Path;
 import java.util.concurrent.ExecutorService;
@@ -24,7 +24,7 @@ public class AppMain {
         AlertDB alertDatabase = new AlertDB(config.getDatabase());
 
         //Initialize system storage snapshot database
-        ServerStorageUsageDB serverStorageUsageDB = new ServerStorageUsageDB(config.getDatabase());
+        ServerStorageSnapshotDB serverStorageUsageDB = new ServerStorageSnapshotDB(config.getDatabase());
 
         //Initialize path storage database
         MountPathStorageUsageDB mountPathStorageUsageDB = new MountPathStorageUsageDB(config.getDatabase());
